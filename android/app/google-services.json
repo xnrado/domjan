@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1056359286724",
+    "project_id": "domjan",
+    "storage_bucket": "domjan.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1056359286724:android:05f593c0cb1bd8e2fb8691",
+        "android_client_info": {
+          "package_name": "pl.domjan.domjan"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1056359286724-1e494eg9smeobnmh2l4afugtsl58ej7l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHDTJx9bAef_STJKughA50wMONx4p4Pu4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1056359286724-1e494eg9smeobnmh2l4afugtsl58ej7l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
