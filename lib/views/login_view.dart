@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../firebase_options.dart';
 import '../palette.dart';
 
@@ -15,7 +16,7 @@ class LoginView extends StatefulWidget {
 
 class _LoginViewState extends State<LoginView> {
   bool isSignupScreen = false;
-  bool isRememberMe = true;
+  bool isRememberMe = false;
   bool overwriteValid = false; // This is stupid, but it works.
 
   final _formKeyLogin = GlobalKey<FormState>();
@@ -38,213 +39,236 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Palette.backgroundColor,
-      body: FutureBuilder(
-        future: Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        ),
-        builder: (context, snapshot) {
-          return Stack(
-            children: [
-              // Main container for login and signup
-              Positioned(
-                  top: 20,
-                  right: 0,
-                  left: 0,
-                  child: Container(
-                    height: 250,
-                    decoration: const BoxDecoration(
-                        image: DecorationImage(
-                            image: AssetImage("assets/login_background.png"))),
-                  )),
-              // Text Fields and other decorations
-              Positioned(
-                top: 250,
+        backgroundColor: Palette.backgroundColor,
+        body: Stack(
+          children: [
+            // Main container for login and signup
+            Positioned(
+                top: 20,
+                right: 0,
+                left: 0,
                 child: Container(
-                  height: 400,
-                  padding: const EdgeInsets.all(20),
-                  width: MediaQuery.of(context).size.width - 40,
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  height: 250,
+                  decoration: const BoxDecoration(
+                      image: DecorationImage(
+                          image: AssetImage("assets/login_background.png"))),
+                )),
+            // Text Fields and other decorations
+            Positioned(
+              top: 250,
+              child: Container(
+                height: 400,
+                padding: const EdgeInsets.all(20),
+                width: MediaQuery.of(context).size.width - 40,
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                    color: Palette.loginBox,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 15,
+                          spreadRadius: 5)
+                    ]),
+                child: Column(children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            isSignupScreen = false;
+                          });
+                        },
+                        child: Column(
+                          children: [
+                            Text(
+                              "LOGOWANIE",
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: !isSignupScreen
+                                      ? Palette.activeTextColor
+                                      : Palette.inactiveTextColor),
+                            ),
+                            if (!isSignupScreen)
+                              Container(
+                                margin: const EdgeInsets.only(top: 2),
+                                height: 2,
+                                width: 115,
+                                color: Palette.domjanColor,
+                              )
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            isSignupScreen = true;
+                          });
+                        },
+                        child: Column(
+                          children: [
+                            Text(
+                              "REJESTRACJA",
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: !isSignupScreen
+                                      ? Palette.inactiveTextColor
+                                      : Palette.activeTextColor),
+                            ),
+                            if (isSignupScreen)
+                              Container(
+                                margin: const EdgeInsets.only(top: 2),
+                                height: 2,
+                                width: 115,
+                                color: Palette.domjanColor,
+                              )
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                  if (!isSignupScreen)
+                    buildLoginSection()
+                  else
+                    buildSignupSection()
+                ]),
+              ),
+            ),
+            // Button
+            Positioned(
+              top: 625,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  height: 90,
+                  width: 90,
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                       color: Palette.loginBox,
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(300),
                       boxShadow: [
                         BoxShadow(
                             color: Colors.black.withOpacity(0.3),
-                            blurRadius: 15,
-                            spreadRadius: 5)
+                            spreadRadius: 1,
+                            blurRadius: 2,
+                            offset: const Offset(0, 1))
                       ]),
-                  child: Column(children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              isSignupScreen = false;
-                            });
-                          },
-                          child: Column(
-                            children: [
-                              Text(
-                                "LOGOWANIE",
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: !isSignupScreen
-                                        ? Palette.activeTextColor
-                                        : Palette.inactiveTextColor),
-                              ),
-                              if (!isSignupScreen)
-                                Container(
-                                  margin: const EdgeInsets.only(top: 2),
-                                  height: 2,
-                                  width: 115,
-                                  color: Palette.domjanColor,
-                                )
-                            ],
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              isSignupScreen = true;
-                            });
-                          },
-                          child: Column(
-                            children: [
-                              Text(
-                                "REJESTRACJA",
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: !isSignupScreen
-                                        ? Palette.inactiveTextColor
-                                        : Palette.activeTextColor),
-                              ),
-                              if (isSignupScreen)
-                                Container(
-                                  margin: const EdgeInsets.only(top: 2),
-                                  height: 2,
-                                  width: 115,
-                                  color: Palette.domjanColor,
-                                )
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
-                    if (!isSignupScreen)
-                      buildLoginSection()
-                    else
-                      buildSignupSection()
-                  ]),
-                ),
-              ),
-              // Button
-              Positioned(
-                top: 625,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    height: 90,
-                    width: 90,
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        color: Palette.loginBox,
-                        borderRadius: BorderRadius.circular(300),
-                        boxShadow: [
-                          BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              spreadRadius: 1,
-                              blurRadius: 2,
-                              offset: const Offset(0, 1))
-                        ]),
-                    child: GestureDetector(
-                      onTap: () async {
-                        log('Klikniety');
-                        // Signup a new user
-                        if (isSignupScreen) {
-                          if (_formKeySignup.currentState!.validate()) {
-                            final email = _emailSignup.text;
-                            final password = _passwordSignup.text;
+                  child: GestureDetector(
+                    onTap: () async {
+                      log('Klikniety');
+                      // Signup a new user
+                      if (isSignupScreen) {
+                        if (_formKeySignup.currentState!.validate()) {
+                          final email = _emailSignup.text;
+                          final password = _passwordSignup.text;
 
-                            try {
-                              await FirebaseAuth.instance
-                                  .createUserWithEmailAndPassword(
-                                      email: email, password: password);
+                          try {
+                            await FirebaseAuth.instance
+                                .createUserWithEmailAndPassword(
+                                    email: email, password: password);
+                            await FirebaseAuth.instance
+                                .signInWithEmailAndPassword(
+                                    email: email, password: password);
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user != null && !user.emailVerified) {
+                              user.sendEmailVerification();
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'Na twój e-mail został wysłany link aktywacyjny!')),
+                            );
+                          } on FirebaseAuthException catch (e) {
+                            if (e.code == 'email-already-in-use') {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content: Text(
-                                        'Na twój e-mail został wysłany link aktywacyjny!')),
+                                        'Konto z takim adresem e-mail już istnieje!')),
                               );
-                            } on FirebaseAuthException catch (e) {
-                              if (e.code == 'email-already-in-use') {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Konto z takim adresem e-mail już istnieje!')),
-                                );
-                              }
                             }
                           }
-                          // Login an existing user
-                        } else {
-                          overwriteValid = true;
-                          if (_formKeyLogin.currentState!.validate()) {
-                            final email = _emailLogin.text;
-                            final password = _passwordLogin.text;
+                        }
+                        // Login an existing user
+                      } else {
+                        overwriteValid = true;
+                        if (_formKeyLogin.currentState!.validate()) {
+                          final email = _emailLogin.text;
+                          final password = _passwordLogin.text;
 
-                            try {
-                              await FirebaseAuth.instance
-                                  .signInWithEmailAndPassword(
-                                      email: email, password: password);
+                          try {
+                            var user = await FirebaseAuth.instance
+                                .signInWithEmailAndPassword(
+                                    email: email, password: password);
+                            bool isEmailVerified =
+                                user.user?.emailVerified ?? false;
+                            // You haven't verified your e-mail
+                            if (!isEmailVerified) {
+                              FirebaseAuth.instance.currentUser
+                                  ?.sendEmailVerification();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Musisz zweryfikować swój adres e-mail!')),
+                              );
+                              // You have been logged in
+                            } else {
+                              SharedPreferences pref =
+                                  await SharedPreferences.getInstance();
+                              pref.setString('email', email);
+                              pref.setString('password', password);
+                              pref.setBool('remember', isRememberMe);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content:
                                         Text('Zostałeś pomyślnie zalogowany!')),
                               );
-                            } on FirebaseAuthException catch (e) {
-                              if (e.code == 'user-not-found' ||
-                                  e.code == 'wrong-password') {
-                                log("nuna");
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Konto z takimi danymi nie istnieje!')),
-                                );
-                                overwriteValid = false;
-                                _formKeyLogin.currentState!.validate();
-                              }
+                              // Transition to the /home/ route
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                '/home/',
+                                (route) => false,
+                              );
+                            }
+                            // Wrong login credentials
+                          } on FirebaseAuthException catch (e) {
+                            if (e.code == 'user-not-found' ||
+                                e.code == 'wrong-password') {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Konto z takimi danymi nie istnieje!')),
+                              );
+                              overwriteValid = false;
+                              _formKeyLogin.currentState!.validate();
                             }
                           }
                         }
-                      },
-                      child: Container(
-                          decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                  colors: [
-                                    Colors.deepOrangeAccent,
-                                    Palette.domjanColor
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight),
-                              borderRadius: BorderRadius.circular(300)),
-                          child: const Icon(
-                            Icons.arrow_forward,
-                            color: Colors.white,
-                            size: 40,
-                          )),
-                    ),
+                      }
+                    },
+                    child: Container(
+                        decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                                colors: [
+                                  Colors.deepOrangeAccent,
+                                  Palette.domjanColor
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight),
+                            borderRadius: BorderRadius.circular(300)),
+                        child: const Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                          size: 40,
+                        )),
                   ),
                 ),
               ),
-            ],
-          );
-        },
-      ),
-    );
+            ),
+          ],
+        ));
   }
 
   Container buildSignupSection() {
@@ -371,6 +395,7 @@ class _LoginViewState extends State<LoginView> {
               if (!valid) {
                 return text;
               }
+              return null;
             },
           ),
         ],
