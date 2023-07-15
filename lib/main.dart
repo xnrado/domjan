@@ -1,19 +1,27 @@
 import 'package:domjan/palette.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
+
 import 'views/login_view.dart';
 import 'views/home_view.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  var home = LoginView();
-
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Load the .env file
+  await dotenv.load(fileName: ".env");
+
+  print(dotenv.env['FOO']);
+
+  // Connect to the database
 
   runApp(const MyApp());
 }
@@ -43,12 +51,12 @@ class MyApp extends StatelessWidget {
               FirebaseAuth.instance.signInWithEmailAndPassword(
                   email: preferences['email'] as String,
                   password: preferences['password'] as String);
-              return HomeView();
+              return const HomeView();
             } else {
-              return LoginView();
+              return const LoginView();
             }
           } else {
-            return LoginView();
+            return const LoginView();
           }
         },
       ),
@@ -61,7 +69,7 @@ class MyApp extends StatelessWidget {
 }
 
 Future<Map> getPreferences() async {
-  var pref = new Map();
+  var pref = {};
 
   // Get last session preferences
   SharedPreferences prefs = await SharedPreferences.getInstance();
