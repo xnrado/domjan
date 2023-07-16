@@ -1,6 +1,7 @@
 import 'package:domjan/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mysql1/mysql1.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -9,6 +10,8 @@ import 'firebase_options.dart';
 
 import 'views/login_view.dart';
 import 'views/home_view.dart';
+
+import 'globals.dart' as globals;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,9 +22,16 @@ Future<void> main() async {
   // Load the .env file
   await dotenv.load(fileName: ".env");
 
-  print(dotenv.env['FOO']);
+  // Initialize preferences
+  globals.prefs = await SharedPreferences.getInstance();
 
   // Connect to the database
+  globals.conn = await MySqlConnection.connect(ConnectionSettings(
+    host: dotenv.env['HOST'] as String,
+    user: dotenv.env['USER'] as String,
+    password: dotenv.env['PASSWORD'] as String,
+    db: dotenv.env['DB'] as String,
+  ));
 
   runApp(const MyApp());
 }
@@ -72,10 +82,9 @@ Future<Map> getPreferences() async {
   var pref = {};
 
   // Get last session preferences
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  pref['email'] = prefs.getString('email');
-  pref['password'] = prefs.getString('password');
-  pref['isRememberMe'] = prefs.getBool('remember');
+  pref['email'] = globals.prefs.getString('email');
+  pref['password'] = globals.prefs.getString('password');
+  pref['isRememberMe'] = globals.prefs.getBool('remember');
 
   return pref;
 }
