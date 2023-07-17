@@ -159,7 +159,6 @@ class _LoginViewState extends State<LoginView> {
                       ]),
                   child: GestureDetector(
                     onTap: () async {
-                      log('Klikniety');
                       // Signup a new user
                       if (isSignupScreen) {
                         if (_formKeySignup.currentState!.validate()) {
@@ -391,7 +390,6 @@ class _LoginViewState extends State<LoginView> {
                 hintStyle: const TextStyle(color: Palette.inactiveTextColor)),
             validator: (value) {
               var (text, valid) = switchController(controller);
-              log(text);
               if (!valid) {
                 return text;
               }
@@ -420,7 +418,6 @@ class _LoginViewState extends State<LoginView> {
       return ('Hasła się ze sobą nie zgadzają.', valid);
       // Login
     } else if (controller == _passwordLogin) {
-      print(overwriteValid ? "tak" : "nie");
       valid = overwriteValid ? true : false;
       return ('Hasło lub adres e-mail się ze sobą nie zgadzają.', valid);
     } else if (controller == _emailLogin) {

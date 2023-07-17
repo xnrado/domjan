@@ -3,8 +3,8 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../firebase_options.dart';
 import '../palette.dart';
 
@@ -27,6 +27,9 @@ class _HomeViewState extends State<HomeView> {
       },
     );
   }
+
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
 
   @override
   Widget build(BuildContext context) {
@@ -106,9 +109,8 @@ class _HomeViewState extends State<HomeView> {
                       '/login/',
                       (route) => false,
                     );
-                    print("Klikane");
                   },
-                  child: ListTile(
+                  child: const ListTile(
                     leading: Icon(
                       Icons.exit_to_app,
                       size: 22,
@@ -138,24 +140,7 @@ class _HomeViewState extends State<HomeView> {
             currentIndex: _selectedIndex,
             onTap: _onItemTapped,
           ),
-          body: FutureBuilder(
-            future: getAssignmentFields(),
-            builder: (context, snapshot) {
-              return ListView.separated(
-                separatorBuilder: (context, index) => const Divider(
-                  color: Palette.activeTextColor,
-                  height: 5,
-                  thickness: 0.5,
-                ),
-                itemCount: snapshot.data?.length ?? 0,
-                itemBuilder: (BuildContext context, int index) {
-                  return Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                      child: snapshot.data?[index]);
-                },
-              );
-            },
-          ),
+          body: _selectedIndex == 0 ? timeline() : calendar(),
           endDrawer: Drawer(
             backgroundColor: Palette.backgroundColor,
             child: FutureBuilder(
@@ -179,6 +164,67 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  FutureBuilder<List<Widget>> timeline() {
+    return FutureBuilder(
+      future: getAssignmentFields(),
+      builder: (context, snapshot) {
+        return ListView.separated(
+          separatorBuilder: (context, index) => const Divider(
+            color: Palette.activeTextColor,
+            height: 5,
+            thickness: 0.5,
+          ),
+          itemCount: snapshot.data?.length ?? 0,
+          itemBuilder: (BuildContext context, int index) {
+            return Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                child: snapshot.data?[index]);
+          },
+        );
+      },
+    );
+  }
+
+  Widget calendar() {
+    return FutureBuilder(
+      future: getAssignmentFields(),
+      builder: (context, snapshot) {
+        return TableCalendar(
+          headerStyle: HeaderStyle(
+              titleTextStyle: TextStyle(color: Palette.domjanColor),
+              formatButtonVisible: false),
+          startingDayOfWeek: StartingDayOfWeek.monday,
+          locale: 'pl_PL',
+          firstDay: DateTime.utc(2023, 1, 1),
+          lastDay: DateTime.utc(2023, 12, 30),
+          focusedDay: _focusedDay,
+          selectedDayPredicate: (day) {
+            return isSameDay(_selectedDay, day);
+          },
+          onDaySelected: (selectedDay, focusedDay) {
+            if (!isSameDay(_selectedDay, selectedDay)) {
+              setState(
+                () {
+                  _selectedDay = selectedDay;
+                  _focusedDay = focusedDay;
+                },
+              );
+            }
+          },
+          onPageChanged: (focusedDay) {
+            _focusedDay = focusedDay;
+          },
+          calendarStyle: const CalendarStyle(
+            outsideTextStyle: TextStyle(color: Palette.inactiveTextColor),
+            weekendTextStyle: TextStyle(color: Palette.activeTextColor),
+            todayTextStyle: TextStyle(color: Palette.domjanColor),
+            defaultTextStyle: TextStyle(color: Palette.activeTextColor),
+          ),
+        );
+      },
+    );
+  }
+
   Future<List<Widget>> getDriverFields() async {
     List<Widget> driverFields = [];
     var drivers = await getDrivers();
@@ -189,13 +235,15 @@ class _HomeViewState extends State<HomeView> {
           onTap: () {
             setState(
               () {
-                globals.prefs.setString('currentDriver', '${driver[1]}');
+                globals.prefs.setString(
+                    'currentDriver', '${driver[1]} ${'${driver[2]}'[0]}.');
               },
             );
           },
           child: ListTile(
             leading: Icon(
-              globals.prefs.getString('currentDriver') == '${driver[1]}'
+              globals.prefs.getString('currentDriver') ==
+                      '${driver[1]} ${'${driver[2]}'[0]}.'
                   ? Icons.check_box
                   : Icons.check_box_outline_blank,
               size: 22,
@@ -242,17 +290,28 @@ class _HomeViewState extends State<HomeView> {
                   child: Container(
                     height: 88,
                     width: 384,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10)),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(10),
+                      ),
+                    ),
                     child: Stack(
                       children: [
-                        Container(),
+                        Container(
+                          height: 64,
+                          decoration: const BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10),
+                              topRight: Radius.circular(10),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                )
+                ),
               ],
             ),
           ),
