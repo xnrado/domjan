@@ -100,10 +100,8 @@ class _HomeViewState extends State<HomeView> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () async {
-                    SharedPreferences pref =
-                        await SharedPreferences.getInstance();
-                    pref.setBool('remember', false);
+                  onTap: () {
+                    globals.prefs.setBool('remember', false);
                     FirebaseAuth.instance.signOut();
                     Navigator.of(context).pushNamedAndRemoveUntil(
                       '/login/',
@@ -129,11 +127,14 @@ class _HomeViewState extends State<HomeView> {
             backgroundColor: Palette.appBarColor,
             items: const [
               BottomNavigationBarItem(
-                  icon: Icon(Icons.home_filled),
-                  label: 'Harmonogram',
-                  backgroundColor: Palette.appBarColor),
+                icon: Icon(Icons.home_filled),
+                label: 'Harmonogram',
+                backgroundColor: Palette.appBarColor,
+              ),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.calendar_month), label: 'Kalendarz')
+                icon: Icon(Icons.calendar_month),
+                label: 'Kalendarz',
+              ),
             ],
             selectedItemColor: Palette.domjanColor,
             unselectedItemColor: Palette.focusColor,
@@ -151,9 +152,9 @@ class _HomeViewState extends State<HomeView> {
                       [
                         const Text(
                           "Coś poszło nie tak, \nnie udało się pokazać kierowców.",
-                          style: TextStyle(color: Palette.errorColor),
+                          style: TextStyle(color: Palette.activeTextColor),
                           textAlign: TextAlign.center,
-                        )
+                        ),
                       ],
                 );
               },
@@ -164,23 +165,31 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  FutureBuilder<List<Widget>> timeline() {
+  Widget timeline() {
     return FutureBuilder(
       future: getAssignmentFields(),
       builder: (context, snapshot) {
-        return ListView.separated(
-          separatorBuilder: (context, index) => const Divider(
-            color: Palette.activeTextColor,
-            height: 5,
-            thickness: 0.5,
-          ),
-          itemCount: snapshot.data?.length ?? 0,
-          itemBuilder: (BuildContext context, int index) {
-            return Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                child: snapshot.data?[index]);
-          },
-        );
+        if (snapshot.hasError) {
+          return const Text(
+            'Nie udało się załadować informacji.',
+          );
+        } else if (snapshot.hasData) {
+          return ListView.separated(
+            separatorBuilder: (context, index) => const Divider(
+              color: Palette.activeTextColor,
+              height: 5,
+              thickness: 0.5,
+            ),
+            itemCount: snapshot.data?.length ?? 0,
+            itemBuilder: (BuildContext context, int index) {
+              return Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  child: snapshot.data?[index]);
+            },
+          );
+        } else {
+          return const CircularProgressIndicator();
+        }
       },
     );
   }
@@ -189,38 +198,46 @@ class _HomeViewState extends State<HomeView> {
     return FutureBuilder(
       future: getAssignmentFields(),
       builder: (context, snapshot) {
-        return TableCalendar(
-          headerStyle: HeaderStyle(
-              titleTextStyle: TextStyle(color: Palette.domjanColor),
-              formatButtonVisible: false),
-          startingDayOfWeek: StartingDayOfWeek.monday,
-          locale: 'pl_PL',
-          firstDay: DateTime.utc(2023, 1, 1),
-          lastDay: DateTime.utc(2023, 12, 30),
-          focusedDay: _focusedDay,
-          selectedDayPredicate: (day) {
-            return isSameDay(_selectedDay, day);
-          },
-          onDaySelected: (selectedDay, focusedDay) {
-            if (!isSameDay(_selectedDay, selectedDay)) {
-              setState(
-                () {
-                  _selectedDay = selectedDay;
-                  _focusedDay = focusedDay;
-                },
-              );
-            }
-          },
-          onPageChanged: (focusedDay) {
-            _focusedDay = focusedDay;
-          },
-          calendarStyle: const CalendarStyle(
-            outsideTextStyle: TextStyle(color: Palette.inactiveTextColor),
-            weekendTextStyle: TextStyle(color: Palette.activeTextColor),
-            todayTextStyle: TextStyle(color: Palette.domjanColor),
-            defaultTextStyle: TextStyle(color: Palette.activeTextColor),
-          ),
-        );
+        if (snapshot.hasError) {
+          return const Text(
+            'Nie udało się załadować informacji.',
+          );
+        } else if (snapshot.hasData) {
+          return TableCalendar(
+            headerStyle: HeaderStyle(
+                titleTextStyle: TextStyle(color: Palette.domjanColor),
+                formatButtonVisible: false),
+            startingDayOfWeek: StartingDayOfWeek.monday,
+            locale: 'pl_PL',
+            firstDay: DateTime.utc(2023, 1, 1),
+            lastDay: DateTime.utc(2023, 12, 30),
+            focusedDay: _focusedDay,
+            selectedDayPredicate: (day) {
+              return isSameDay(_selectedDay, day);
+            },
+            onDaySelected: (selectedDay, focusedDay) {
+              if (!isSameDay(_selectedDay, selectedDay)) {
+                setState(
+                  () {
+                    _selectedDay = selectedDay;
+                    _focusedDay = focusedDay;
+                  },
+                );
+              }
+            },
+            onPageChanged: (focusedDay) {
+              _focusedDay = focusedDay;
+            },
+            calendarStyle: const CalendarStyle(
+              outsideTextStyle: TextStyle(color: Palette.inactiveTextColor),
+              weekendTextStyle: TextStyle(color: Palette.activeTextColor),
+              todayTextStyle: TextStyle(color: Palette.domjanColor),
+              defaultTextStyle: TextStyle(color: Palette.activeTextColor),
+            ),
+          );
+        } else {
+          return const CircularProgressIndicator();
+        }
       },
     );
   }

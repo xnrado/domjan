@@ -11,6 +11,7 @@ import 'firebase_options.dart';
 
 import 'views/login_view.dart';
 import 'views/home_view.dart';
+import 'views/code_view.dart';
 
 import 'globals.dart' as globals;
 
@@ -65,7 +66,11 @@ class MyApp extends StatelessWidget {
               FirebaseAuth.instance.signInWithEmailAndPassword(
                   email: preferences['email'] as String,
                   password: preferences['password'] as String);
-              return const HomeView();
+              if (preferences['code']?.isNotEmpty ?? false) {
+                return const HomeView();
+              } else {
+                return const CodeView();
+              }
             } else {
               return const LoginView();
             }
@@ -76,7 +81,8 @@ class MyApp extends StatelessWidget {
       ),
       routes: {
         '/login/': (context) => const LoginView(),
-        '/home/': (context) => const HomeView()
+        '/home/': (context) => const HomeView(),
+        '/code/': (context) => const CodeView()
       },
     );
   }
@@ -89,6 +95,7 @@ Future<Map> getPreferences() async {
   pref['email'] = globals.prefs.getString('email');
   pref['password'] = globals.prefs.getString('password');
   pref['isRememberMe'] = globals.prefs.getBool('remember');
+  pref['code'] = globals.prefs.getString('code');
 
   return pref;
 }
