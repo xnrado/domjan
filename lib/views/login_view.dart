@@ -25,6 +25,9 @@ class _LoginViewState extends State<LoginView> {
   final _passwordSignup = TextEditingController();
   final _confirmPassword = TextEditingController();
 
+  // I hate this, but Form validator doesn't accept async Strings
+  Map validation = {};
+
   @override
   void dispose() {
     _emailLogin.dispose();
@@ -157,10 +160,12 @@ class _LoginViewState extends State<LoginView> {
                     onTap: () async {
                       // Signup a new user
                       if (isSignupScreen) {
+                        await switchController();
                         _formKeySignup.currentState!.validate();
 
                         // Login an existing user
                       } else {
+                        await switchController();
                         _formKeyLogin.currentState!.validate();
                       }
                     },
@@ -289,37 +294,40 @@ class _LoginViewState extends State<LoginView> {
       padding: const EdgeInsets.all(8.0),
       child: Column(
         children: [
-          FutureBuilder(
-            future: switchController(controller),
-            builder: (context, snapshot) {
-              return TextFormField(
-                controller: controller,
-                style: const TextStyle(color: Palette.activeTextColor),
-                obscureText: isPassword,
-                keyboardType:
-                    isEmail ? TextInputType.emailAddress : TextInputType.text,
-                decoration: InputDecoration(
-                    prefixIcon: icon,
-                    border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                        borderSide:
-                            BorderSide(color: Palette.inactiveTextColor)),
-                    focusedBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                        borderSide:
-                            BorderSide(width: 2, color: Palette.focusColor)),
-                    hintText: hintText,
-                    hintStyle:
-                        const TextStyle(color: Palette.inactiveTextColor)),
-                validator: (value) {
-                  var text = snapshot.data?[0];
-                  var valid = snapshot.data?[1];
-                  if (!valid) {
-                    return text;
-                  }
-                  return null;
-                },
-              );
+          TextFormField(
+            controller: controller,
+            style: const TextStyle(color: Palette.activeTextColor),
+            obscureText: isPassword,
+            keyboardType:
+                isEmail ? TextInputType.emailAddress : TextInputType.text,
+            decoration: InputDecoration(
+                prefixIcon: icon,
+                border: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                    borderSide: BorderSide(color: Palette.inactiveTextColor)),
+                focusedBorder: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                    borderSide:
+                        BorderSide(width: 2, color: Palette.focusColor)),
+                hintText: hintText,
+                hintStyle: const TextStyle(color: Palette.inactiveTextColor)),
+            validator: (value) {
+              if (controller == _emailSignup) {
+                return validation['signupEmail'] ??
+                    validation['signUpEmailUsed'];
+              } else if (controller == _passwordSignup) {
+                return validation['signupPassword'];
+              } else if (controller == _confirmPassword) {
+                return validation['signupConfirmPassword'];
+              } else if (controller == _emailLogin) {
+                return validation['loginEmail'] ??
+                    validation['loginEmailNotVerified'] ??
+                    validation['loginWrong'];
+              } else if (controller == _passwordLogin) {
+                return validation['loginPassword'];
+              } else {
+                return null;
+              }
             },
           ),
         ],
@@ -327,77 +335,69 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  Future<List> switchController(TextEditingController? controller) async {
+  Future<void> switchController() async {
+    validation = {};
+
     // Signin
-    if ([_emailSignup, _passwordSignup, _confirmPassword]
-        .contains(controller)) {
-      bool emailValid = true;
-      bool passwordValid = true;
-      bool confirmPasswordValid = true;
-      // E-mail adress doesn't fit the regex
-      if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-              .hasMatch(_emailSignup.text) &&
-          controller == _emailSignup) {
-        emailValid = false;
-        return ['Wpisz poprawny adres e-mail.', false];
-      }
-      // Password not inputted or shorter than 6 characters
-      if (_passwordSignup.text.isEmpty ||
-          _passwordSignup.text.length < 6 && controller == _passwordSignup) {
-        passwordValid = false;
-        return ['Hasło musi mieć przynajmniej 6 znaków.', false];
-      }
-      // Second password doesn't match the first one
-      if (_confirmPassword.text != _passwordSignup.text &&
-          controller == _confirmPassword) {
-        confirmPasswordValid = false;
-        return ['Hasła się ze sobą nie zgadzają.', false];
-      }
-      // If everything is OK, try to sign up the user
-      if (emailValid && passwordValid && confirmPasswordValid) {
-        try {
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-              email: _emailSignup.text, password: _passwordSignup.text);
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-              email: _emailSignup.text, password: _passwordSignup.text);
-          final user = FirebaseAuth.instance.currentUser;
-          if (user != null && !user.emailVerified) {
-            user.sendEmailVerification();
-          }
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content:
-                    Text('Na twój e-mail został wysłany link aktywacyjny!')),
-          );
-          // If sign up is succesful, return everything as valid
-          return ['', true];
-          // Email already in use
-        } on FirebaseAuthException catch (e) {
-          if (e.code == 'email-already-in-use') {
-            if (controller == _emailSignup) {
-              return ['Konto z takim adresem e-mail już istnieje.', false];
-            }
-          }
+    bool emailValid = true;
+    bool passwordValid = true;
+    bool confirmPasswordValid = true;
+    // E-mail adress doesn't fit the regex
+    if (!RegExp(
+            r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+        .hasMatch(_emailSignup.text)) {
+      emailValid = false;
+      validation['signupEmail'] = 'Wpisz poprawny adres e-mail.';
+    }
+    // Password not inputted or shorter than 6 characters
+    if (_passwordSignup.text.isEmpty || _passwordSignup.text.length < 6) {
+      passwordValid = false;
+      validation['signupPassword'] = 'Hasło musi mieć przynajmniej 6 znaków.';
+    }
+    // Second password doesn't match the first one
+    if (_confirmPassword.text != _passwordSignup.text) {
+      confirmPasswordValid = false;
+      validation['signupConfirmPassword'] = 'Hasła się ze sobą nie zgadzają.';
+    }
+    // If everything is OK, try to sign up the user
+    if (emailValid && passwordValid && confirmPasswordValid) {
+      try {
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: _emailSignup.text, password: _passwordSignup.text);
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: _emailSignup.text, password: _passwordSignup.text);
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null && !user.emailVerified) {
+          user.sendEmailVerification();
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Na twój e-mail został wysłany link aktywacyjny!')),
+        );
+        // Email already in use
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'email-already-in-use') {
+          validation['signUpEmailUsed'] =
+              'Konto z takim adresem e-mail już istnieje.';
         }
       }
+    }
 
-      // This is needed so valid inputs aren't registered as invalid
-      return ['', true];
-      // Login
-    } else {
+    // Login
+    else {
       bool emailValid = true;
       bool passwordValid = true;
       // E-mail adress doesn't fit the regex
-      if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-              .hasMatch(_emailLogin.text) &&
-          controller == _emailLogin) {
+      if (!RegExp(
+              r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+          .hasMatch(_emailLogin.text)) {
         emailValid = false;
-        return ['Wpisz poprawny adres e-mail.', false];
+        validation['loginEmail'] = 'Wpisz poprawny adres e-mail.';
       }
       // Password not inputted
-      if (_passwordSignup.text.isEmpty && controller == _passwordLogin) {
+      if (_passwordLogin.text.isEmpty) {
         passwordValid = false;
-        return ['Wpisz hasło.', false];
+        validation['loginPassword'] = 'Wpisz hasło.';
       }
       // If everything is OK, try to login the user
       if (emailValid && passwordValid) {
@@ -412,14 +412,9 @@ class _LoginViewState extends State<LoginView> {
                   content: Text('Musisz zweryfikować swój adres e-mail!')),
             );
 
-            if (controller == _emailLogin) {
-              return [
-                'Ten e-mail nie został zweryfikowany, sprawdź pocztę.',
-                false
-              ];
-            } else {
-              return ['', true];
-            }
+            validation['loginEmailNotVerified'] =
+                'Ten e-mail nie został zweryfikowany, sprawdź pocztę.';
+
             // You have been logged in
           } else {
             globals.prefs.setString('email', _emailLogin.text);
@@ -440,23 +435,12 @@ class _LoginViewState extends State<LoginView> {
                 (route) => false,
               );
             }
-
-            return ['', true];
           }
           // Wrong login credentials
         } on FirebaseAuthException catch (e) {
-          if (e.code == 'user-not-found' || e.code == 'wrong-password') {
-            if (controller == _emailLogin) {
-              return ['Konto z takimi danymi nie istnieje.', false];
-            } else {
-              return ['', true];
-            }
-          }
+          validation['loginWrong'] = 'Konto z takimi danymi nie istnieje.';
         }
       }
-
-      // This is needed so valid inputs aren't registered as invalid
-      return ['', true];
     }
   }
 }
