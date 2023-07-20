@@ -4,6 +4,10 @@ import '../palette.dart';
 
 import '../globals.dart' as globals;
 
+import 'home_view.dart';
+import 'code_view.dart';
+import 'resetPassword_view.dart';
+
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
 
@@ -12,11 +16,11 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  bool isSignupScreen = false;
-  bool isRememberMe = false;
+  final isSignupScreen = ValueNotifier<bool>(false);
+  final isRememberMe = ValueNotifier<bool>(false);
 
-  final _formKeyLogin = GlobalKey<FormState>();
-  final _formKeySignup = GlobalKey<FormState>();
+  static final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
+  static final GlobalKey<FormState> _formKeySignup = GlobalKey<FormState>();
 
   final _emailLogin = TextEditingController();
   final _passwordLogin = TextEditingController();
@@ -32,168 +36,176 @@ class _LoginViewState extends State<LoginView> {
   void dispose() {
     _emailLogin.dispose();
     _passwordLogin.dispose();
+    _emailSignup.dispose();
+    _passwordSignup.dispose();
+    _confirmPassword.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Palette.backgroundColor,
-        body: Stack(
-          children: [
-            // Main container for login and signup
-            Positioned(
-                top: 20,
-                right: 0,
-                left: 0,
-                child: Container(
-                  height: 250,
-                  decoration: const BoxDecoration(
-                      image: DecorationImage(
-                          image: AssetImage("assets/login_background.png"))),
-                )),
-            // Text Fields and other decorations
-            Positioned(
-              top: 250,
-              child: Container(
-                height: 400,
-                padding: const EdgeInsets.all(20),
-                width: MediaQuery.of(context).size.width - 40,
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(
-                    color: Palette.loginBox,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 15,
-                          spreadRadius: 5)
-                    ]),
-                child: Column(children: [
+      backgroundColor: Palette.backgroundColor,
+      body: Stack(
+        children: [
+          // Main container for login and signup
+          const HeaderWidget(),
+          // Text Fields and other decorations
+          Positioned(
+            top: 250,
+            child: Container(
+              height: 400,
+              padding: const EdgeInsets.all(20),
+              width: MediaQuery.of(context).size.width - 40,
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Palette.loginBox,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 15,
+                      spreadRadius: 5)
+                ],
+              ),
+              child: Column(
+                children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       GestureDetector(
                         onTap: () {
-                          setState(() {
-                            isSignupScreen = false;
-                          });
+                          isSignupScreen.value = false;
                         },
-                        child: Column(
-                          children: [
-                            Text(
-                              "LOGOWANIE",
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: !isSignupScreen
-                                      ? Palette.activeTextColor
-                                      : Palette.inactiveTextColor),
-                            ),
-                            if (!isSignupScreen)
-                              Container(
-                                margin: const EdgeInsets.only(top: 2),
-                                height: 2,
-                                width: 115,
-                                color: Palette.domjanColor,
-                              )
-                          ],
+                        child: ValueListenableBuilder(
+                          valueListenable: isSignupScreen,
+                          builder: (context, value, child) => Column(
+                            children: [
+                              Text(
+                                "LOGOWANIE",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: !value
+                                        ? Palette.activeTextColor
+                                        : Palette.inactiveTextColor),
+                              ),
+                              if (!value)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 2),
+                                  height: 2,
+                                  width: 115,
+                                  color: Palette.domjanColor,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                       GestureDetector(
                         onTap: () {
-                          setState(() {
-                            isSignupScreen = true;
-                          });
+                          isSignupScreen.value = true;
                         },
-                        child: Column(
-                          children: [
-                            Text(
-                              "REJESTRACJA",
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: !isSignupScreen
-                                      ? Palette.inactiveTextColor
-                                      : Palette.activeTextColor),
-                            ),
-                            if (isSignupScreen)
-                              Container(
-                                margin: const EdgeInsets.only(top: 2),
-                                height: 2,
-                                width: 115,
-                                color: Palette.domjanColor,
-                              )
-                          ],
+                        child: ValueListenableBuilder(
+                          valueListenable: isSignupScreen,
+                          builder: (context, value, child) => Column(
+                            children: [
+                              Text(
+                                "REJESTRACJA",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: !value
+                                        ? Palette.inactiveTextColor
+                                        : Palette.activeTextColor),
+                              ),
+                              if (value)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 2),
+                                  height: 2,
+                                  width: 115,
+                                  color: Palette.domjanColor,
+                                )
+                            ],
+                          ),
                         ),
-                      )
+                      ),
                     ],
                   ),
-                  if (isSignupScreen)
-                    buildSignupSection()
-                  else
-                    buildLoginSection()
-                ]),
-              ),
-            ),
-            // Login/Signup button
-            Positioned(
-              top: 625,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  height: 90,
-                  width: 90,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                      color: Palette.loginBox,
-                      borderRadius: BorderRadius.circular(300),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            spreadRadius: 1,
-                            blurRadius: 2,
-                            offset: const Offset(0, 1))
-                      ]),
-                  child: GestureDetector(
-                    onTap: () async {
-                      // Signup a new user
-                      if (isSignupScreen) {
-                        await switchController();
-                        _formKeySignup.currentState!.validate();
-
-                        // Login an existing user
+                  ValueListenableBuilder(
+                    valueListenable: isSignupScreen,
+                    builder: (context, value, child) {
+                      if (value) {
+                        return buildSignupSection();
                       } else {
-                        await switchController();
-                        _formKeyLogin.currentState!.validate();
+                        return buildLoginSection();
                       }
                     },
-                    child: Container(
-                      decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                              colors: [
-                                Colors.deepOrangeAccent,
-                                Palette.domjanColor
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight),
-                          borderRadius: BorderRadius.circular(300)),
-                      child: const Icon(
-                        Icons.arrow_forward,
-                        color: Colors.white,
-                        size: 40,
-                      ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Login/Signup button
+          Positioned(
+            top: 625,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                height: 90,
+                width: 90,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Palette.loginBox,
+                  borderRadius: BorderRadius.circular(300),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        spreadRadius: 1,
+                        blurRadius: 2,
+                        offset: const Offset(0, 1))
+                  ],
+                ),
+                child: GestureDetector(
+                  onTap: () async {
+                    // Signup a new user
+                    if (isSignupScreen.value) {
+                      await switchController();
+                      _formKeySignup.currentState!.validate();
+
+                      // Login an existing user
+                    } else {
+                      await switchController();
+                      _formKeyLogin.currentState!.validate();
+                    }
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                            colors: [
+                              Colors.deepOrangeAccent,
+                              Palette.domjanColor
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight),
+                        borderRadius: BorderRadius.circular(300)),
+                    child: const Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                      size: 40,
                     ),
                   ),
                 ),
               ),
             ),
-          ],
-        ));
+          ),
+        ],
+      ),
+    );
   }
 
   Container buildSignupSection() {
+    print('buildSignupSection');
     return Container(
       margin: const EdgeInsets.only(top: 20),
       child: Form(
@@ -231,6 +243,7 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Container buildLoginSection() {
+    print('buildLoginSection');
     return Container(
       margin: const EdgeInsets.only(top: 20),
       child: Form(
@@ -258,21 +271,36 @@ class _LoginViewState extends State<LoginView> {
               children: [
                 Row(
                   children: [
-                    Checkbox(
-                        value: isRememberMe,
-                        activeColor: Palette.domjanColor,
-                        onChanged: (value) {
-                          setState(() {
-                            isRememberMe = !isRememberMe;
-                          });
-                        }),
+                    ValueListenableBuilder(
+                      valueListenable: isRememberMe,
+                      builder: (context, value, child) => Checkbox(
+                          value: value,
+                          activeColor: Palette.domjanColor,
+                          onChanged: (value) {
+                            isRememberMe.value = !isRememberMe.value;
+                          }),
+                    ),
                     const Text('Zapamiętaj mnie',
                         style: TextStyle(
                             fontSize: 14, color: Palette.activeTextColor)),
                   ],
                 ),
                 TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.of(context).push(PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  const ResetPasswordView(),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) =>
+                                  SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0, 1),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
+                                  )));
+                    },
                     child: const Text(
                       'Zapomniałeś hasła?',
                       style: TextStyle(color: Palette.linkColor),
@@ -290,6 +318,7 @@ class _LoginViewState extends State<LoginView> {
       bool isPassword = false,
       bool isEmail = false,
       TextEditingController? controller}) {
+    print("buildTextField");
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -437,10 +466,31 @@ class _LoginViewState extends State<LoginView> {
             }
           }
           // Wrong login credentials
-        } on FirebaseAuthException catch (e) {
+        } on FirebaseAuthException {
           validation['loginWrong'] = 'Konto z takimi danymi nie istnieje.';
         }
       }
     }
+  }
+}
+
+class HeaderWidget extends StatelessWidget {
+  const HeaderWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: 20,
+      right: 0,
+      left: 0,
+      child: Container(
+        height: 250,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("assets/login_background.png"),
+          ),
+        ),
+      ),
+    );
   }
 }

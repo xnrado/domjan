@@ -9,11 +9,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 
+import 'globals.dart' as globals;
+
 import 'views/login_view.dart';
 import 'views/home_view.dart';
 import 'views/code_view.dart';
-
-import 'globals.dart' as globals;
+import 'views/resetPassword_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,7 +83,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login/': (context) => const LoginView(),
         '/home/': (context) => const HomeView(),
-        '/code/': (context) => const CodeView()
+        '/code/': (context) => const CodeView(),
+        '/resetPassword/': (context) => const ResetPasswordView()
       },
     );
   }

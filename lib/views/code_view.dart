@@ -15,6 +15,8 @@ class CodeView extends StatefulWidget {
 class _CodeViewState extends State<CodeView> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return const Scaffold(
+      backgroundColor: Palette.backgroundColor,
+    );
   }
 }
