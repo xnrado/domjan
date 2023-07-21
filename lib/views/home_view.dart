@@ -46,7 +46,7 @@ class _HomeViewState extends State<HomeView> {
                     child: Row(
                       children: [
                         Text(
-                          globals.prefs.getString('currentDriver') ??
+                          globals.prefs?.getString('currentDriver') ??
                               "Wybierz Kierowcę",
                           style: const TextStyle(color: Palette.domjanColor),
                         ),
@@ -96,7 +96,7 @@ class _HomeViewState extends State<HomeView> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    globals.prefs.setBool('remember', false);
+                    globals.prefs?.setBool('remember', false);
                     FirebaseAuth.instance.signOut();
                     Navigator.of(context).pushNamedAndRemoveUntil(
                       '/login/',
@@ -247,14 +247,14 @@ class _HomeViewState extends State<HomeView> {
           onTap: () {
             setState(
               () {
-                globals.prefs.setString(
+                globals.prefs?.setString(
                     'currentDriver', '${driver[1]} ${'${driver[2]}'[0]}.');
               },
             );
           },
           child: ListTile(
             leading: Icon(
-              globals.prefs.getString('currentDriver') ==
+              globals.prefs?.getString('currentDriver') ==
                       '${driver[1]} ${'${driver[2]}'[0]}.'
                   ? Icons.check_box
                   : Icons.check_box_outline_blank,
@@ -274,7 +274,7 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Future getDrivers() async {
-    var drivers = await globals.conn.query('select * from drivers');
+    var drivers = await globals.conn?.execute('select * from drivers');
     return drivers;
   }
 
@@ -335,7 +335,7 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Future getAssignments() async {
-    var assignments = await globals.conn.query('select * from drivers');
+    var assignments = await globals.conn?.execute('select * from drivers');
     return assignments;
   }
 }

@@ -17,13 +17,16 @@ class LoginView extends StatefulWidget {
 
 class _LoginViewState extends State<LoginView> {
   final isSignupScreen = ValueNotifier<bool>(false);
-  final isRememberMe = ValueNotifier<bool>(false);
+  final isRememberMe =
+      ValueNotifier<bool>(globals.prefs?.getBool('remember') ?? false);
 
-  static final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
-  static final GlobalKey<FormState> _formKeySignup = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKeyLogin = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKeySignup = GlobalKey<FormState>();
 
-  final _emailLogin = TextEditingController();
-  final _passwordLogin = TextEditingController();
+  final _emailLogin =
+      TextEditingController(text: globals.prefs?.getString('email'));
+  final _passwordLogin =
+      TextEditingController(text: globals.prefs?.getString('password'));
 
   final _emailSignup = TextEditingController();
   final _passwordSignup = TextEditingController();
@@ -205,7 +208,6 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Container buildSignupSection() {
-    print('buildSignupSection');
     return Container(
       margin: const EdgeInsets.only(top: 20),
       child: Form(
@@ -243,7 +245,6 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Container buildLoginSection() {
-    print('buildLoginSection');
     return Container(
       margin: const EdgeInsets.only(top: 20),
       child: Form(
@@ -287,19 +288,25 @@ class _LoginViewState extends State<LoginView> {
                 ),
                 TextButton(
                     onPressed: () {
-                      Navigator.of(context).push(PageRouteBuilder(
+                      Navigator.of(context).push(
+                        PageRouteBuilder(
+                          transitionDuration: const Duration(milliseconds: 200),
+                          reverseTransitionDuration:
+                              const Duration(milliseconds: 200),
                           pageBuilder:
                               (context, animation, secondaryAnimation) =>
                                   const ResetPasswordView(),
                           transitionsBuilder:
                               (context, animation, secondaryAnimation, child) =>
                                   SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: const Offset(0, 1),
-                                      end: Offset.zero,
-                                    ).animate(animation),
-                                    child: child,
-                                  )));
+                            position: Tween<Offset>(
+                              begin: const Offset(0, 1),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        ),
+                      );
                     },
                     child: const Text(
                       'Zapomniałeś hasła?',
@@ -318,7 +325,6 @@ class _LoginViewState extends State<LoginView> {
       bool isPassword = false,
       bool isEmail = false,
       TextEditingController? controller}) {
-    print("buildTextField");
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -330,16 +336,22 @@ class _LoginViewState extends State<LoginView> {
             keyboardType:
                 isEmail ? TextInputType.emailAddress : TextInputType.text,
             decoration: InputDecoration(
-                prefixIcon: icon,
-                border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                    borderSide: BorderSide(color: Palette.inactiveTextColor)),
-                focusedBorder: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                    borderSide:
-                        BorderSide(width: 2, color: Palette.focusColor)),
-                hintText: hintText,
-                hintStyle: const TextStyle(color: Palette.inactiveTextColor)),
+              prefixIcon: icon,
+              border: const OutlineInputBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(20.0),
+                ),
+                borderSide: BorderSide(color: Palette.inactiveTextColor),
+              ),
+              focusedBorder: const OutlineInputBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(20.0),
+                ),
+                borderSide: BorderSide(width: 2, color: Palette.focusColor),
+              ),
+              hintText: hintText,
+              hintStyle: const TextStyle(color: Palette.inactiveTextColor),
+            ),
             validator: (value) {
               if (controller == _emailSignup) {
                 return validation['signupEmail'] ??
@@ -366,48 +378,50 @@ class _LoginViewState extends State<LoginView> {
 
   Future<void> switchController() async {
     validation = {};
-
-    // Signin
-    bool emailValid = true;
-    bool passwordValid = true;
-    bool confirmPasswordValid = true;
-    // E-mail adress doesn't fit the regex
-    if (!RegExp(
-            r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-        .hasMatch(_emailSignup.text)) {
-      emailValid = false;
-      validation['signupEmail'] = 'Wpisz poprawny adres e-mail.';
-    }
-    // Password not inputted or shorter than 6 characters
-    if (_passwordSignup.text.isEmpty || _passwordSignup.text.length < 6) {
-      passwordValid = false;
-      validation['signupPassword'] = 'Hasło musi mieć przynajmniej 6 znaków.';
-    }
-    // Second password doesn't match the first one
-    if (_confirmPassword.text != _passwordSignup.text) {
-      confirmPasswordValid = false;
-      validation['signupConfirmPassword'] = 'Hasła się ze sobą nie zgadzają.';
-    }
-    // If everything is OK, try to sign up the user
-    if (emailValid && passwordValid && confirmPasswordValid) {
-      try {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-            email: _emailSignup.text, password: _passwordSignup.text);
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-            email: _emailSignup.text, password: _passwordSignup.text);
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null && !user.emailVerified) {
-          user.sendEmailVerification();
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Na twój e-mail został wysłany link aktywacyjny!')),
-        );
-        // Email already in use
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'email-already-in-use') {
-          validation['signUpEmailUsed'] =
-              'Konto z takim adresem e-mail już istnieje.';
+    if (isSignupScreen.value) {
+      // Signin
+      bool emailValid = true;
+      bool passwordValid = true;
+      bool confirmPasswordValid = true;
+      // E-mail adress doesn't fit the regex
+      if (!RegExp(
+              r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+          .hasMatch(_emailSignup.text)) {
+        emailValid = false;
+        validation['signupEmail'] = 'Wpisz poprawny adres e-mail.';
+      }
+      // Password not inputted or shorter than 6 characters
+      if (_passwordSignup.text.isEmpty || _passwordSignup.text.length < 6) {
+        passwordValid = false;
+        validation['signupPassword'] = 'Hasło musi mieć przynajmniej 6 znaków.';
+      }
+      // Second password doesn't match the first one
+      if (_confirmPassword.text != _passwordSignup.text) {
+        confirmPasswordValid = false;
+        validation['signupConfirmPassword'] = 'Hasła się ze sobą nie zgadzają.';
+      }
+      // If everything is OK, try to sign up the user
+      if (emailValid && passwordValid && confirmPasswordValid) {
+        try {
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+              email: _emailSignup.text, password: _passwordSignup.text);
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+              email: _emailSignup.text, password: _passwordSignup.text);
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null && !user.emailVerified) {
+            user.sendEmailVerification();
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content:
+                    Text('Na twój e-mail został wysłany link aktywacyjny!')),
+          );
+          // Email already in use
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'email-already-in-use') {
+            validation['signUpEmailUsed'] =
+                'Konto z takim adresem e-mail już istnieje.';
+          }
         }
       }
     }
@@ -442,28 +456,35 @@ class _LoginViewState extends State<LoginView> {
             );
 
             validation['loginEmailNotVerified'] =
-                'Ten e-mail nie został zweryfikowany, sprawdź pocztę.';
+                'Niezweryfikowany e-mail, sprawdź pocztę.';
 
             // You have been logged in
           } else {
-            globals.prefs.setString('email', _emailLogin.text);
-            globals.prefs.setString('password', _passwordLogin.text);
-            globals.prefs.setBool('remember', isRememberMe);
+            globals.prefs?.setString('email', _emailLogin.text);
+            globals.prefs?.setString('password', _passwordLogin.text);
+            globals.prefs?.setBool('remember', isRememberMe.value);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Zostałeś pomyślnie zalogowany!')),
             );
+
             // Check if the driver has a valid code and route
-            if (globals.prefs.getString('code')?.isNotEmpty ?? false) {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/home/',
-                (route) => false,
-              );
-            } else {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/code/',
-                (route) => false,
-              );
-            }
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                transitionDuration: const Duration(milliseconds: 200),
+                reverseTransitionDuration: const Duration(milliseconds: 200),
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const HomeView(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) =>
+                        SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(1, 0),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              ),
+            );
           }
           // Wrong login credentials
         } on FirebaseAuthException {

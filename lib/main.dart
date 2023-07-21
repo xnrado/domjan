@@ -2,7 +2,7 @@ import 'package:domjan/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:mysql1/mysql1.dart';
+import 'package:mysql_client/mysql_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -32,12 +32,17 @@ Future<void> main() async {
   globals.prefs = await SharedPreferences.getInstance();
 
   // Connect to the database
-  globals.conn = await MySqlConnection.connect(ConnectionSettings(
-    host: dotenv.env['HOST'] as String,
-    user: dotenv.env['USER'] as String,
-    password: dotenv.env['PASSWORD'] as String,
-    db: dotenv.env['DB'] as String,
-  ));
+  globals.conn = await MySQLConnection.createConnection(
+      host: dotenv.env['HOST'] as String,
+      port: 3306,
+      userName: dotenv.env['USER'] as String,
+      password: dotenv.env['PASSWORD'] as String,
+      databaseName: dotenv.env['DB'] as String,
+      secure: false);
+  await globals.conn!.connect();
+  var code = await globals.conn!.execute(
+      "SELECT driver_code FROM drivers WHERE driver_mail='xnrad123@gmail.com'");
+  print(code.numOfRows);
 
   runApp(const MyApp());
 }
@@ -94,10 +99,10 @@ Future<Map> getPreferences() async {
   var pref = {};
 
   // Get last session preferences
-  pref['email'] = globals.prefs.getString('email');
-  pref['password'] = globals.prefs.getString('password');
-  pref['isRememberMe'] = globals.prefs.getBool('remember');
-  pref['code'] = globals.prefs.getString('code');
+  pref['email'] = globals.prefs?.getString('email');
+  pref['password'] = globals.prefs?.getString('password');
+  pref['isRememberMe'] = globals.prefs?.getBool('remember');
+  pref['code'] = globals.prefs?.getString('code');
 
   return pref;
 }
