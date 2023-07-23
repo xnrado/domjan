@@ -4,8 +4,7 @@ import '../palette.dart';
 
 import '../globals.dart' as globals;
 
-import 'home_view.dart';
-import 'code_view.dart';
+import 'home/home_view.dart';
 import 'resetPassword_view.dart';
 
 class LoginView extends StatefulWidget {
@@ -467,7 +466,7 @@ class _LoginViewState extends State<LoginView> {
               const SnackBar(content: Text('Zostałeś pomyślnie zalogowany!')),
             );
 
-            // Check if the driver has a valid code and route
+            // Route to HomeView
             Navigator.of(context).push(
               PageRouteBuilder(
                 transitionDuration: const Duration(milliseconds: 200),

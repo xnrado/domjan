@@ -1,9 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../palette.dart';
+import '../../palette.dart';
 
-import '../globals.dart' as globals;
+import '../../globals.dart' as globals;
+
+import './calendar.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -22,9 +24,6 @@ class _HomeViewState extends State<HomeView> {
       },
     );
   }
-
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +135,7 @@ class _HomeViewState extends State<HomeView> {
             currentIndex: _selectedIndex,
             onTap: _onItemTapped,
           ),
-          body: _selectedIndex == 0 ? timeline() : calendar(),
+          body: _selectedIndex == 0 ? timeline() : Calendar(),
           endDrawer: Drawer(
             backgroundColor: Palette.backgroundColor,
             child: FutureBuilder(
@@ -189,55 +188,12 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  Widget calendar() {
-    return FutureBuilder(
-      future: getAssignmentFields(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return const Text(
-            'Nie udało się załadować informacji.',
-          );
-        } else if (snapshot.hasData) {
-          return TableCalendar(
-            headerStyle: HeaderStyle(
-                titleTextStyle: TextStyle(color: Palette.domjanColor),
-                formatButtonVisible: false),
-            startingDayOfWeek: StartingDayOfWeek.monday,
-            locale: 'pl_PL',
-            firstDay: DateTime.utc(2023, 1, 1),
-            lastDay: DateTime.utc(2023, 12, 30),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) {
-              return isSameDay(_selectedDay, day);
-            },
-            onDaySelected: (selectedDay, focusedDay) {
-              if (!isSameDay(_selectedDay, selectedDay)) {
-                setState(
-                  () {
-                    _selectedDay = selectedDay;
-                    _focusedDay = focusedDay;
-                  },
-                );
-              }
-            },
-            onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
-            },
-            calendarStyle: const CalendarStyle(
-              outsideTextStyle: TextStyle(color: Palette.inactiveTextColor),
-              weekendTextStyle: TextStyle(color: Palette.activeTextColor),
-              todayTextStyle: TextStyle(color: Palette.domjanColor),
-              defaultTextStyle: TextStyle(color: Palette.activeTextColor),
-            ),
-          );
-        } else {
-          return const CircularProgressIndicator();
-        }
-      },
-    );
-  }
-
   Future<List<Widget>> getDriverFields() async {
+    Future getDrivers() async {
+      var drivers = await globals.conn?.execute('select * from drivers');
+      return drivers;
+    }
+
     List<Widget> driverFields = [];
     var drivers = await getDrivers();
 
@@ -273,11 +229,6 @@ class _HomeViewState extends State<HomeView> {
     return driverFields;
   }
 
-  Future getDrivers() async {
-    var drivers = await globals.conn?.execute('select * from drivers');
-    return drivers;
-  }
-
   Future<List<Widget>> getAssignmentFields() async {
     List<Widget> assignmentFields = [];
     var assignments = await getAssignments();
@@ -292,7 +243,7 @@ class _HomeViewState extends State<HomeView> {
             width: 384,
             child: Stack(
               children: [
-                Text(
+                const Text(
                   'Test',
                   textAlign: TextAlign.left,
                   style: TextStyle(color: Colors.black),

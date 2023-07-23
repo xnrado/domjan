@@ -12,7 +12,7 @@ import 'firebase_options.dart';
 import 'globals.dart' as globals;
 
 import 'views/login_view.dart';
-import 'views/home_view.dart';
+import 'views/home/home_view.dart';
 import 'views/code_view.dart';
 import 'views/resetPassword_view.dart';
 
@@ -61,30 +61,15 @@ class MyApp extends StatelessWidget {
             selectionHandleColor: Palette.cursorColor),
         useMaterial3: true,
       ),
-      home: FutureBuilder<Map>(
-        future: getPreferences(),
-        builder: (BuildContext context, AsyncSnapshot<Map> snapshot) {
-          if (snapshot.hasData) {
-            Map preferences = snapshot.data as Map;
-            if ((preferences['isRememberMe'] ?? false) &&
-                (preferences['email']?.isNotEmpty ?? false) &&
-                (preferences['password']?.isNotEmpty ?? false)) {
-              FirebaseAuth.instance.signInWithEmailAndPassword(
-                  email: preferences['email'] as String,
-                  password: preferences['password'] as String);
-              if (preferences['code']?.isNotEmpty ?? false) {
-                return const HomeView();
-              } else {
-                return const CodeView();
-              }
-            } else {
-              return const LoginView();
-            }
-          } else {
-            return const LoginView();
-          }
-        },
-      ),
+      home: () {
+        if ((globals.prefs?.getString('email')?.isNotEmpty ?? false) &&
+            (globals.prefs?.getString('password')?.isNotEmpty ?? false) &&
+            (globals.prefs?.getBool('remember') ?? false)) {
+          return const HomeView();
+        } else {
+          return const LoginView();
+        }
+      }(),
       routes: {
         '/login/': (context) => const LoginView(),
         '/home/': (context) => const HomeView(),

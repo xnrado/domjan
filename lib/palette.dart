@@ -11,5 +11,6 @@ class Palette {
   static const Color inactiveTextColor = Color.fromARGB(255, 75, 75, 75);
   static const Color focusColor = Color.fromARGB(255, 133, 133, 133);
   static const Color linkColor = Color.fromARGB(255, 3, 146, 206);
+  static const Color selectColor = Color.fromARGB(255, 86, 118, 203);
   static const Color errorColor = Color.fromARGB(255, 209, 12, 45);
 }

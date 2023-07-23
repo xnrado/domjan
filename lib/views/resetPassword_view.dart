@@ -1,11 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../palette.dart';
-
-import '../globals.dart' as globals;
-
-import 'login_view.dart';
 
 class ResetPasswordView extends StatefulWidget {
   const ResetPasswordView({super.key});
@@ -148,7 +143,6 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                 ),
                 child: GestureDetector(
                   onTap: () async {
-                    print('dziala');
                     await switchController();
                     _formKeyPassReset.currentState!.validate();
                   },
@@ -185,7 +179,6 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
     if (!RegExp(
             r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
         .hasMatch(_emailPassReset.text)) {
-      print('nuna');
       emailValid = false;
       validation['resetPassEmail'] = 'Wpisz poprawny adres e-mail.';
     }
@@ -199,7 +192,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
               content: Text(
                   'Na twój e-mail został wysłany link do zresetowania hasła!')),
         );
-      } on FirebaseAuthException catch (e) {
+      } on FirebaseAuthException {
         validation['resetPassNotFound'] =
             'Konto z takim adresem e-mail nie istnieje.';
         return;
