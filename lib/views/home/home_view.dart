@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
 import '../../palette.dart';
 
 import '../../globals.dart' as globals;
@@ -189,36 +188,73 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Future<List<Widget>> getDriverFields() async {
-    Future getDrivers() async {
-      var drivers = await globals.conn?.execute('select * from drivers');
-      return drivers;
-    }
-
     List<Widget> driverFields = [];
-    var drivers = await getDrivers();
-
-    for (var driver in drivers) {
+    var drivers = await globals.conn?.execute('select * from drivers');
+    print('dostałem');
+    print(drivers);
+    print(drivers!.numOfRows);
+    if (drivers.numOfRows == 0) {
+      print('Nie działa');
+      return [
+        const Text(
+          "Coś poszło nie tak, \nnie udało się pokazać kierowców.",
+          style: TextStyle(color: Palette.activeTextColor),
+          textAlign: TextAlign.center,
+        ),
+      ];
+    }
+    print('dalej');
+    driverFields.add(
+      SizedBox(
+        height: 96,
+        child: DrawerHeader(
+          child: Column(
+            children: [
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Twoje konto DOM-JAN',
+                  style:
+                      TextStyle(color: Palette.activeTextColor, fontSize: 24),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  FirebaseAuth.instance.currentUser?.email ?? 'dummy@',
+                  style:
+                      const TextStyle(color: Palette.linkColor, fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    for (final driver in drivers.rows) {
+      print("raz");
+      print(driver.assoc());
       driverFields.add(
         GestureDetector(
           onTap: () {
             setState(
               () {
-                globals.prefs?.setString(
-                    'currentDriver', '${driver[1]} ${'${driver[2]}'[0]}.');
+                globals.prefs?.setString('currentDriver',
+                    '${driver.colAt(1)} ${'${driver.colAt(2)}'[0]}.');
               },
             );
           },
           child: ListTile(
             leading: Icon(
               globals.prefs?.getString('currentDriver') ==
-                      '${driver[1]} ${'${driver[2]}'[0]}.'
+                      '${driver.colAt(1)} ${'${driver.colAt(2)}'[0]}.'
                   ? Icons.check_box
                   : Icons.check_box_outline_blank,
               size: 22,
               color: Palette.activeTextColor,
             ),
             title: Text(
-              '${driver[1]} ${'${driver[2]}'[0]}.',
+              '${driver.colAt(1)} ${'${driver.colAt(2)}'[0]}.',
               style: const TextStyle(color: Palette.activeTextColor),
             ),
           ),
@@ -231,62 +267,65 @@ class _HomeViewState extends State<HomeView> {
 
   Future<List<Widget>> getAssignmentFields() async {
     List<Widget> assignmentFields = [];
-    var assignments = await getAssignments();
-
-    for (var assignment in assignments) {
+    var assignments = await globals.conn?.execute('select * from drivers');
+    if (assignments?.rows.length == 0) {
       assignmentFields.add(
-        GestureDetector(
-          onTap: () {},
-          child: Container(
-            color: Colors.blue,
-            height: 112,
-            width: 384,
-            child: Stack(
-              children: [
-                const Text(
-                  'Test',
-                  textAlign: TextAlign.left,
-                  style: TextStyle(color: Colors.black),
-                ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    height: 88,
-                    width: 384,
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(10),
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        Container(
-                          height: 64,
-                          decoration: const BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(10),
-                              topRight: Radius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        const Text(
+          "Coś poszło nie tak, \nnie udało się pokazać kierowców.",
+          style: TextStyle(color: Palette.activeTextColor),
+          textAlign: TextAlign.center,
         ),
       );
+    } else {
+      for (var assignment in assignments!.rows) {
+        assignmentFields.add(
+          GestureDetector(
+            onTap: () {},
+            child: Container(
+              color: Colors.blue,
+              height: 112,
+              width: 384,
+              child: Stack(
+                children: [
+                  const Text(
+                    'Test',
+                    textAlign: TextAlign.left,
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      height: 88,
+                      width: 384,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(10),
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          Container(
+                            height: 64,
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(10),
+                                topRight: Radius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
     }
-
     return assignmentFields;
-  }
-
-  Future getAssignments() async {
-    var assignments = await globals.conn?.execute('select * from drivers');
-    return assignments;
   }
 }

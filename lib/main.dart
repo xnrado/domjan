@@ -6,7 +6,6 @@ import 'package:mysql_client/mysql_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 
 import 'globals.dart' as globals;
@@ -42,7 +41,6 @@ Future<void> main() async {
   await globals.conn!.connect();
   var code = await globals.conn!.execute(
       "SELECT driver_code FROM drivers WHERE driver_mail='xnrad123@gmail.com'");
-  print(code.numOfRows);
 
   runApp(const MyApp());
 }
