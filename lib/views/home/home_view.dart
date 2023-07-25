@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../palette.dart';
-
 import '../../globals.dart' as globals;
 
 import './calendar.dart';
@@ -15,11 +14,20 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   int _selectedIndex = 0;
+  int _selectedDrawerIndex = 0;
 
   void _onItemTapped(int index) {
     setState(
       () {
         _selectedIndex = index;
+      },
+    );
+  }
+
+  void _onDrawerItemTapped(int index) {
+    setState(
+      () {
+        _selectedDrawerIndex = index;
       },
     );
   }
@@ -116,23 +124,25 @@ class _HomeViewState extends State<HomeView> {
               ],
             ),
           ),
-          bottomNavigationBar: BottomNavigationBar(
-            backgroundColor: Palette.appBarColor,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_filled),
-                label: 'Harmonogram',
-                backgroundColor: Palette.appBarColor,
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.calendar_month),
-                label: 'Kalendarz',
-              ),
-            ],
-            selectedItemColor: Palette.domjanColor,
-            unselectedItemColor: Palette.focusColor,
-            currentIndex: _selectedIndex,
-            onTap: _onItemTapped,
+          bottomNavigationBar: Theme(
+            data: ThemeData(splashFactory: NoSplash.splashFactory),
+            child: BottomNavigationBar(
+              backgroundColor: Palette.appBarColor,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_filled),
+                  label: 'Harmonogram',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.calendar_month),
+                  label: 'Kalendarz',
+                ),
+              ],
+              selectedItemColor: Palette.domjanColor,
+              unselectedItemColor: Palette.focusColor,
+              currentIndex: _selectedIndex,
+              onTap: _onItemTapped,
+            ),
           ),
           body: _selectedIndex == 0 ? timeline() : Calendar(),
           endDrawer: Drawer(
@@ -190,11 +200,7 @@ class _HomeViewState extends State<HomeView> {
   Future<List<Widget>> getDriverFields() async {
     List<Widget> driverFields = [];
     var drivers = await globals.conn?.execute('select * from drivers');
-    print('dostałem');
-    print(drivers);
-    print(drivers!.numOfRows);
-    if (drivers.numOfRows == 0) {
-      print('Nie działa');
+    if (drivers?.numOfRows == 0) {
       return [
         const Text(
           "Coś poszło nie tak, \nnie udało się pokazać kierowców.",
@@ -203,37 +209,45 @@ class _HomeViewState extends State<HomeView> {
         ),
       ];
     }
-    print('dalej');
     driverFields.add(
       SizedBox(
-        height: 96,
-        child: DrawerHeader(
-          child: Column(
-            children: [
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Twoje konto DOM-JAN',
-                  style:
-                      TextStyle(color: Palette.activeTextColor, fontSize: 24),
+        height: 88,
+        child: Theme(
+          data: ThemeData(
+            splashFactory: NoSplash.splashFactory,
+            shadowColor: Colors.transparent,
+            canvasColor: Colors.transparent,
+          ),
+          child: BottomNavigationBar(
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.person,
+                  size: 24,
                 ),
+                label: 'Kierowcy',
               ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  FirebaseAuth.instance.currentUser?.email ?? 'dummy@',
-                  style:
-                      const TextStyle(color: Palette.linkColor, fontSize: 14),
+              BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.directions_bus,
+                  size: 24,
                 ),
+                label: 'Pojazdy',
               ),
             ],
+            selectedItemColor: Palette.domjanColor,
+            unselectedItemColor: Palette.focusColor,
+            currentIndex: _selectedDrawerIndex,
+            onTap: _onDrawerItemTapped,
           ),
         ),
       ),
     );
-    for (final driver in drivers.rows) {
-      print("raz");
-      print(driver.assoc());
+    driverFields.add(Container(
+      color: Colors.white,
+      height: 0.8,
+    ));
+    for (final driver in drivers!.rows) {
       driverFields.add(
         GestureDetector(
           onTap: () {
@@ -268,6 +282,7 @@ class _HomeViewState extends State<HomeView> {
   Future<List<Widget>> getAssignmentFields() async {
     List<Widget> assignmentFields = [];
     var assignments = await globals.conn?.execute('select * from drivers');
+    // ignore: prefer_is_empty
     if (assignments?.rows.length == 0) {
       assignmentFields.add(
         const Text(
