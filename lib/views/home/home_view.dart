@@ -13,23 +13,26 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  int _selectedIndex = 0;
-  int _selectedDrawerIndex = 0;
+  int _selectedHomeIndex = 0;
+  late ValueNotifier<int> _selectedDrawerIndex;
 
-  void _onItemTapped(int index) {
+  @override
+  void initState() {
+    super.initState();
+    print('Drawer State Initialized');
+    _selectedDrawerIndex = ValueNotifier(0);
+  }
+
+  void _onHomeItemTapped(int index) {
     setState(
       () {
-        _selectedIndex = index;
+        _selectedHomeIndex = index;
       },
     );
   }
 
   void _onDrawerItemTapped(int index) {
-    setState(
-      () {
-        _selectedDrawerIndex = index;
-      },
-    );
+    _selectedDrawerIndex.value = index;
   }
 
   @override
@@ -45,6 +48,26 @@ class _HomeViewState extends State<HomeView> {
             actions: <Widget>[
               Builder(
                 builder: (context) {
+                  // The current selected driver/bus on the appbar
+                  String? currentDrawerSelection =
+                      globals.prefs?.getString('currentDrawerSelection');
+                  // Check if nothing selected yet
+                  currentDrawerSelection ??= 'Wybierz Kierowcę.';
+                  Icon icon;
+                  // Check if it's a bus or a driver by looking at the last char
+                  if (currentDrawerSelection[
+                          currentDrawerSelection.length - 1] ==
+                      '.') {
+                    icon = const Icon(
+                      Icons.person,
+                      color: Palette.domjanColor,
+                    );
+                  } else {
+                    icon = const Icon(
+                      Icons.directions_bus,
+                      color: Palette.domjanColor,
+                    );
+                  }
                   return GestureDetector(
                     onTap: () {
                       Scaffold.of(context).openEndDrawer();
@@ -52,16 +75,12 @@ class _HomeViewState extends State<HomeView> {
                     child: Row(
                       children: [
                         Text(
-                          globals.prefs?.getString('currentDriver') ??
-                              "Wybierz Kierowcę",
+                          currentDrawerSelection,
                           style: const TextStyle(color: Palette.domjanColor),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Icon(
-                            Icons.person,
-                            color: Palette.domjanColor,
-                          ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: icon,
                         ),
                       ],
                     ),
@@ -140,28 +159,37 @@ class _HomeViewState extends State<HomeView> {
               ],
               selectedItemColor: Palette.domjanColor,
               unselectedItemColor: Palette.focusColor,
-              currentIndex: _selectedIndex,
-              onTap: _onItemTapped,
+              currentIndex: _selectedHomeIndex,
+              onTap: _onHomeItemTapped,
             ),
           ),
-          body: _selectedIndex == 0 ? timeline() : Calendar(),
-          endDrawer: Drawer(
-            backgroundColor: Palette.backgroundColor,
-            child: FutureBuilder(
-              future: getDriverFields(),
-              builder: (context, snapshot) {
-                return ListView(
-                  children: snapshot.data ??
-                      [
-                        const Text(
-                          "Coś poszło nie tak, \nnie udało się pokazać kierowców.",
-                          style: TextStyle(color: Palette.activeTextColor),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                );
-              },
-            ),
+          body: _selectedHomeIndex == 0 ? timeline() : Calendar(),
+          endDrawer: StatefulBuilder(
+            builder: (context, setState) {
+              return Drawer(
+                backgroundColor: Palette.backgroundColor,
+                child: ValueListenableBuilder(
+                    valueListenable: _selectedDrawerIndex,
+                    builder: (context, value, child) {
+                      return FutureBuilder(
+                        future: getDrawerFields(value),
+                        builder: (context, snapshot) {
+                          return ListView(
+                            children: snapshot.data ??
+                                [
+                                  const Text(
+                                    "Coś poszło nie tak, \nnie udało się pokazać kierowców.",
+                                    style: TextStyle(
+                                        color: Palette.activeTextColor),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                          );
+                        },
+                      );
+                    }),
+              );
+            },
           ),
         );
       },
@@ -197,19 +225,10 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  Future<List<Widget>> getDriverFields() async {
-    List<Widget> driverFields = [];
-    var drivers = await globals.conn?.execute('select * from drivers');
-    if (drivers?.numOfRows == 0) {
-      return [
-        const Text(
-          "Coś poszło nie tak, \nnie udało się pokazać kierowców.",
-          style: TextStyle(color: Palette.activeTextColor),
-          textAlign: TextAlign.center,
-        ),
-      ];
-    }
-    driverFields.add(
+  Future<List<Widget>> getDrawerFields(int index) async {
+    List<Widget> drawerFields = [];
+
+    drawerFields.add(
       SizedBox(
         height: 88,
         child: Theme(
@@ -237,46 +256,104 @@ class _HomeViewState extends State<HomeView> {
             ],
             selectedItemColor: Palette.domjanColor,
             unselectedItemColor: Palette.focusColor,
-            currentIndex: _selectedDrawerIndex,
+            currentIndex: index,
             onTap: _onDrawerItemTapped,
           ),
         ),
       ),
     );
-    driverFields.add(Container(
-      color: Colors.white,
-      height: 0.8,
-    ));
-    for (final driver in drivers!.rows) {
-      driverFields.add(
-        GestureDetector(
-          onTap: () {
-            setState(
-              () {
-                globals.prefs?.setString('currentDriver',
-                    '${driver.colAt(1)} ${'${driver.colAt(2)}'[0]}.');
-              },
-            );
-          },
-          child: ListTile(
-            leading: Icon(
-              globals.prefs?.getString('currentDriver') ==
-                      '${driver.colAt(1)} ${'${driver.colAt(2)}'[0]}.'
-                  ? Icons.check_box
-                  : Icons.check_box_outline_blank,
-              size: 22,
-              color: Palette.activeTextColor,
-            ),
-            title: Text(
-              '${driver.colAt(1)} ${'${driver.colAt(2)}'[0]}.',
-              style: const TextStyle(color: Palette.activeTextColor),
+
+    drawerFields.add(
+      Container(
+        color: Colors.white,
+        height: 0.8,
+      ),
+    );
+
+    // Get Drivers
+    if (index == 0) {
+      var drivers = await globals.conn
+          ?.execute('SELECT driver_name, driver_surname FROM drivers;');
+      if (drivers?.numOfRows == 0) {
+        return [
+          const Text(
+            "Coś poszło nie tak, \nnie udało się pokazać kierowców.",
+            style: TextStyle(color: Palette.activeTextColor),
+            textAlign: TextAlign.center,
+          ),
+        ];
+      }
+      for (final driver in drivers!.rows) {
+        drawerFields.add(
+          GestureDetector(
+            onTap: () {
+              setState(
+                () {
+                  globals.prefs?.setString('currentDrawerSelection',
+                      '${driver.colAt(0)} ${'${driver.colAt(1)}'[0]}.');
+                },
+              );
+            },
+            child: ListTile(
+              leading: Icon(
+                globals.prefs?.getString('currentDrawerSelection') ==
+                        '${driver.colAt(0)} ${'${driver.colAt(1)}'[0]}.'
+                    ? Icons.check_box
+                    : Icons.check_box_outline_blank,
+                size: 22,
+                color: Palette.activeTextColor,
+              ),
+              title: Text(
+                '${driver.colAt(0)} ${'${driver.colAt(1)}'[0]}.',
+                style: const TextStyle(color: Palette.activeTextColor),
+              ),
             ),
           ),
-        ),
-      );
+        );
+      }
+      // Get Vehicles
+    } else {
+      var vehicles = await globals.conn
+          ?.execute('SELECT bus_name, bus_region, bus_plate FROM buses');
+      if (vehicles?.numOfRows == 0) {
+        return [
+          const Text(
+            "Coś poszło nie tak, \nnie udało się pokazać pojazdów.",
+            style: TextStyle(color: Palette.activeTextColor),
+            textAlign: TextAlign.center,
+          ),
+        ];
+      }
+      for (final vehicle in vehicles!.rows) {
+        drawerFields.add(
+          GestureDetector(
+            onTap: () {
+              setState(
+                () {
+                  globals.prefs?.setString(
+                      'currentDrawerSelection', '${vehicle.colAt(0)}');
+                },
+              );
+            },
+            child: ListTile(
+              leading: Icon(
+                globals.prefs?.getString('currentDrawerSelection') ==
+                        '${vehicle.colAt(0)}'
+                    ? Icons.check_box
+                    : Icons.check_box_outline_blank,
+                size: 22,
+                color: Palette.activeTextColor,
+              ),
+              title: Text(
+                '${vehicle.colAt(0)} [${vehicle.colAt(1)} ${'${vehicle.colAt(2)}'}]',
+                style: const TextStyle(color: Palette.activeTextColor),
+              ),
+            ),
+          ),
+        );
+      }
     }
-
-    return driverFields;
+    return drawerFields;
   }
 
   Future<List<Widget>> getAssignmentFields() async {

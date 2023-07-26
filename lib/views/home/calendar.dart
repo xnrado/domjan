@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:domjan/views/event.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -11,20 +9,21 @@ class Calendar extends StatefulWidget {
   const Calendar({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _CalendarState createState() => _CalendarState();
 }
 
 class _CalendarState extends State<Calendar> {
-  late final ValueNotifier<List<Event>> _selectedEvents;
+  late ValueNotifier<List<Event>> _selectedEvents =
+      ValueNotifier(_getEventsForDay(_focusedDay));
   DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay = DateTime.now();
+  DateTime? _selectedDay;
 
   @override
   void initState() {
     super.initState();
     print('State Initialized');
-    _selectedDay = _focusedDay;
-    _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
+    _selectedEvents = ValueNotifier(_getEventsForDay(_focusedDay));
   }
 
   @override
@@ -35,6 +34,7 @@ class _CalendarState extends State<Calendar> {
 
   List<Event> _getEventsForDay(DateTime day) {
     // Implementation example
+    print("123");
     return kEvents[day] ?? [];
   }
 

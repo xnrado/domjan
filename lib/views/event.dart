@@ -4,19 +4,23 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../globals.dart' as globals;
+
 class Event {
   final String title;
-  Color? color = Colors.white;
-  Event({required this.title, this.color});
+  Color? color;
+  Event(
+      {required this.title, this.color = const Color.fromARGB(255, 245, 8, 8)});
 
   @override
   String toString() => title;
 }
 
-final kEvents = LinkedHashMap<DateTime, List<Event>>(
-  equals: isSameDay,
-  hashCode: getHashCode,
-)..addAll(_kEventSource);
+final kEvents = <DateTime, List<Event>>{}..addAll({
+    DateTime.utc(2023, 7, 26): [
+      Event(title: 'test1', color: Colors.amber),
+    ],
+  });
 
 final _kEventSource = {
   for (var item in List.generate(50, (index) => index))
