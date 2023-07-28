@@ -16,8 +16,20 @@ class Event {
   String toString() => title;
 }
 
+Future<Map<DateTime, List<Event>>> xEvents() async {
+  for (int i = 0; i < 200; i++) {
+    var code = await globals.conn!.execute(
+        "SELECT driver_code FROM drivers WHERE driver_mail='xnrad123@gmail.com'");
+  }
+  return <DateTime, List<Event>>{}..addAll({
+      DateTime.utc(2023, 7, 28): [
+        Event(title: 'test1', color: Colors.amber),
+      ],
+    });
+}
+
 final kEvents = <DateTime, List<Event>>{}..addAll({
-    DateTime.utc(2023, 7, 26): [
+    DateTime.utc(2023, 7, 28): [
       Event(title: 'test1', color: Colors.amber),
     ],
   });
