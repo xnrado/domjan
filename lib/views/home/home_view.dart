@@ -1,3 +1,4 @@
+import 'package:domjan/views/home/drivers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../palette.dart';
@@ -13,7 +14,7 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  int _selectedHomeIndex = 0;
+  int _selectedHomeIndex = 2;
   late ValueNotifier<int> _selectedDrawerIndex;
 
   @override
@@ -121,22 +122,107 @@ class _HomeViewState extends State<HomeView> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    globals.prefs?.setBool('remember', false);
-                    FirebaseAuth.instance.signOut();
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/login/',
-                      (route) => false,
+                    _onHomeItemTapped(2);
+                    Navigator.pop(context);
+                  },
+                  child: const ListTile(
+                    leading: Icon(
+                      Icons.person,
+                      size: 22,
+                      color: Palette.activeTextColor,
+                    ),
+                    title: Text(
+                      'Kierowcy',
+                      style: TextStyle(color: Palette.activeTextColor),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _onHomeItemTapped(3);
+                    Navigator.pop(context);
+                  },
+                  child: const ListTile(
+                    leading: Icon(
+                      Icons.directions_bus,
+                      size: 22,
+                      color: Palette.activeTextColor,
+                    ),
+                    title: Text(
+                      'Pojazdy',
+                      style: TextStyle(color: Palette.activeTextColor),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _onHomeItemTapped(4);
+                    Navigator.pop(context);
+                  },
+                  child: const ListTile(
+                    leading: Icon(
+                      Icons.phone,
+                      size: 22,
+                      color: Palette.activeTextColor,
+                    ),
+                    title: Text(
+                      'Kontakty',
+                      style: TextStyle(color: Palette.activeTextColor),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Widget cancelButton = TextButton(
+                      child: const Text("Anuluj",
+                          style: TextStyle(color: Palette.activeTextColor)),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    );
+                    Widget continueButton = TextButton(
+                      child: const Text(
+                        "Wyloguj",
+                        style: TextStyle(color: Palette.errorColor),
+                      ),
+                      onPressed: () {
+                        globals.prefs?.setBool('remember', false);
+                        FirebaseAuth.instance.signOut();
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          '/login/',
+                          (route) => false,
+                        );
+                      },
+                    );
+
+                    showDialog(
+                      context: context,
+                      builder: ((context) {
+                        return AlertDialog(
+                          backgroundColor: Palette.backgroundColor,
+                          contentTextStyle: const TextStyle(
+                              color: Palette.activeTextColor, fontSize: 24),
+                          content: Container(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: const Text(
+                              'Czy na pewno\nchcesz się wylogować?',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          actions: [cancelButton, continueButton],
+                        );
+                      }),
                     );
                   },
                   child: const ListTile(
                     leading: Icon(
                       Icons.exit_to_app,
                       size: 22,
-                      color: Palette.activeTextColor,
+                      color: Palette.selectColor,
                     ),
                     title: Text(
                       'Wyloguj się',
-                      style: TextStyle(color: Palette.activeTextColor),
+                      style: TextStyle(color: Palette.selectColor),
                     ),
                   ),
                 )
@@ -157,13 +243,38 @@ class _HomeViewState extends State<HomeView> {
                   label: 'Kalendarz',
                 ),
               ],
-              selectedItemColor: Palette.domjanColor,
+              selectedItemColor: _selectedHomeIndex > 1
+                  ? Palette.focusColor
+                  : Palette.domjanColor,
               unselectedItemColor: Palette.focusColor,
-              currentIndex: _selectedHomeIndex,
+              currentIndex: _selectedHomeIndex > 1 ? 0 : _selectedHomeIndex,
               onTap: _onHomeItemTapped,
             ),
           ),
-          body: _selectedHomeIndex == 0 ? timeline() : Calendar(),
+          body: () {
+            switch (_selectedHomeIndex) {
+              case 0:
+                {
+                  return timeline();
+                }
+              case 1:
+                {
+                  return const Calendar();
+                }
+              case 2:
+                {
+                  return const Drivers();
+                }
+              case 3:
+                {
+                  return const Drivers();
+                }
+              case 4:
+                {
+                  return timeline();
+                }
+            }
+          }(),
           endDrawer: StatefulBuilder(
             builder: (context, setState) {
               return Drawer(
@@ -272,8 +383,8 @@ class _HomeViewState extends State<HomeView> {
 
     // Get Drivers
     if (index == 0) {
-      var drivers = await globals.conn
-          ?.execute('SELECT driver_name, driver_surname FROM drivers;');
+      var drivers = await globals.conn?.execute(
+          'SELECT driver_name, driver_surname, driver_id FROM drivers;');
       if (drivers?.numOfRows == 0) {
         return [
           const Text(
@@ -291,6 +402,10 @@ class _HomeViewState extends State<HomeView> {
                 () {
                   globals.prefs?.setString('currentDrawerSelection',
                       '${driver.colAt(0)} ${'${driver.colAt(1)}'[0]}.');
+                  globals.prefs?.setInt(
+                      'currentDrawerSelectionID', int.parse(driver.colAt(2)!));
+                  globals.prefs
+                      ?.setString('currentDrawerSelectionType', 'driver');
                 },
               );
             },
@@ -313,8 +428,8 @@ class _HomeViewState extends State<HomeView> {
       }
       // Get Vehicles
     } else {
-      var vehicles = await globals.conn
-          ?.execute('SELECT bus_name, bus_region, bus_plate FROM buses');
+      var vehicles = await globals.conn?.execute(
+          'SELECT bus_name, bus_region, bus_plate, bus_id FROM buses');
       if (vehicles?.numOfRows == 0) {
         return [
           const Text(
@@ -332,6 +447,9 @@ class _HomeViewState extends State<HomeView> {
                 () {
                   globals.prefs?.setString(
                       'currentDrawerSelection', '${vehicle.colAt(0)}');
+                  globals.prefs?.setInt(
+                      'currentDrawerSelectionID', int.parse(vehicle.colAt(3)!));
+                  globals.prefs?.setString('currentDrawerSelectionType', 'bus');
                 },
               );
             },

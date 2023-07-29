@@ -1,4 +1,4 @@
-import 'package:domjan/views/event.dart';
+import 'package:domjan/views/classes.dart';
 import 'package:domjan/views/home/assignment.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -37,7 +37,7 @@ class _CalendarState extends State<Calendar> {
   List<Event> _getEventsForDay(DateTime day) {
     // Implementation example
     print("123");
-    return kEvents[day] ?? [];
+    return yEvents[day] ?? [];
   }
 
   @override
@@ -45,11 +45,15 @@ class _CalendarState extends State<Calendar> {
     return StatefulBuilder(
       builder: (context, setState) {
         return FutureBuilder(
-          future: xEvents(),
+          future: getEvents(globals.prefs?.getInt('currentDrawerSelectionID'),
+              globals.prefs?.getString('currentDrawerSelectionType')),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              return const Text(
-                'Nie udało się załadować informacji.',
+              return const Center(
+                child: Text(
+                  'Nie udało się załadować informacji.',
+                  style: TextStyle(color: Palette.domjanColor, fontSize: 24),
+                ),
               );
             } else if (snapshot.hasData) {
               yEvents = snapshot.data!;
@@ -59,7 +63,7 @@ class _CalendarState extends State<Calendar> {
                     calendarBuilders: CalendarBuilders(
                       singleMarkerBuilder: (context, day, event) {
                         Event e = event as Event;
-                        Color? cor = e.color;
+                        Color? cor = e.assignmentColor;
                         return Container(
                           decoration:
                               BoxDecoration(shape: BoxShape.circle, color: cor),
@@ -141,7 +145,7 @@ class _CalendarState extends State<Calendar> {
                                 vertical: 4.0,
                               ),
                               decoration: BoxDecoration(
-                                color: value[index].color,
+                                color: value[index].assignmentColor,
                                 border: Border.all(),
                                 borderRadius: BorderRadius.circular(12.0),
                               ),
@@ -168,7 +172,8 @@ class _CalendarState extends State<Calendar> {
                                     ),
                                   );
                                 },
-                                title: Text('${value[index]}'),
+                                title: Text('${value[index].assignmentName}'),
+                                leading: Icon(Icons.sunny),
                               ),
                             );
                           },

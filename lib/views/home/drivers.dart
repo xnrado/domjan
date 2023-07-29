@@ -1,0 +1,202 @@
+import 'package:domjan/views/classes.dart';
+import 'package:flutter/material.dart';
+
+import '../../palette.dart';
+
+class Drivers extends StatefulWidget {
+  const Drivers({super.key});
+
+  @override
+  State<Drivers> createState() => _DriversState();
+}
+
+class _DriversState extends State<Drivers> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Palette.backgroundColor,
+      appBar: AppBar(
+        centerTitle: true,
+        iconTheme: const IconThemeData(size: 36, color: Palette.domjanColor),
+        backgroundColor: Palette.backgroundColor,
+        title: const Text(
+          'Kierowcy',
+          style: TextStyle(color: Palette.domjanColor),
+        ),
+        bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1.5),
+            child: Container(
+              color: Palette.activeTextColor,
+              height: 1.5,
+            )),
+      ),
+      body: FutureBuilder(
+        future: getDrivers(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text(
+                'Nie udało się załadować informacji\no kierowcach.',
+                style: TextStyle(color: Palette.domjanColor, fontSize: 24),
+                textAlign: TextAlign.center,
+              ),
+            );
+          } else if (snapshot.hasData) {
+            final Map<int, Driver> drivers = snapshot.data as Map<int, Driver>;
+            final List<Driver> driversValues = drivers.values.toList();
+            final double width = MediaQuery.of(context).size.width - 20;
+            final double height = MediaQuery.of(context).size.height;
+            final double idWidth = (width / 10) * 1;
+            final double nameWidth = (width / 10) * 5 - 2;
+            final double busesWidth = (width / 10) * 4;
+
+            return DefaultTextStyle(
+              style: const TextStyle(color: Palette.activeTextColor),
+              child: InteractiveViewer(
+                panEnabled: false,
+                minScale: 1,
+                maxScale: 3,
+                child: Column(
+                  children: [
+                    Container(
+                      height: 40,
+                      decoration: const BoxDecoration(
+                          color: Palette.loginBox,
+                          border: Border(
+                              bottom: BorderSide(
+                                  color: Palette.activeTextColor, width: 1.5))),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(left: 10),
+                            width: idWidth,
+                            child: const Text('l.p'),
+                          ),
+                          const VerticalDivider(
+                            color: Palette.inactiveTextColor,
+                            width: 1,
+                          ),
+                          Container(
+                            padding: const EdgeInsets.only(left: 10),
+                            width: nameWidth,
+                            child: const Text('Kierowca'),
+                          ),
+                          const VerticalDivider(
+                            color: Palette.inactiveTextColor,
+                            width: 1,
+                          ),
+                          Container(
+                            padding: const EdgeInsets.only(left: 10),
+                            width: busesWidth,
+                            child: const Text('Pojazdy'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.separated(
+                        separatorBuilder: (context, index) => const Divider(
+                          color: Palette.activeTextColor,
+                          height: 5,
+                          thickness: 0.5,
+                        ),
+                        itemCount: driversValues.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                PageRouteBuilder(
+                                  transitionDuration:
+                                      const Duration(milliseconds: 200),
+                                  reverseTransitionDuration:
+                                      const Duration(milliseconds: 200),
+                                  pageBuilder: (context, animation,
+                                          secondaryAnimation) =>
+                                      const Text("Test"),
+                                  transitionsBuilder: (context, animation,
+                                          secondaryAnimation, child) =>
+                                      SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0, 1),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: IntrinsicHeight(
+                              child: Container(
+                                color: index % 2 == 1
+                                    ? Palette.loginBox
+                                    : Palette.backgroundColor,
+                                constraints:
+                                    const BoxConstraints(minHeight: 40),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.only(left: 10),
+                                      width: idWidth,
+                                      child: Text(driversValues[index]
+                                          .driverId
+                                          .toString()),
+                                    ),
+                                    const VerticalDivider(
+                                      color: Palette.inactiveTextColor,
+                                      width: 1,
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.only(left: 10),
+                                      width: nameWidth,
+                                      child: Text(
+                                          '${driversValues[index].driverName} ${driversValues[index].driverSurname[0]}.'),
+                                    ),
+                                    const VerticalDivider(
+                                      color: Palette.inactiveTextColor,
+                                      width: 1,
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.only(left: 10),
+                                      width: busesWidth,
+                                      child: () {
+                                        String text = '';
+                                        for (final bus in driversValues[index]
+                                            .driverBuses!) {
+                                          text = '$text$bus\n';
+                                        }
+                                        return Text(text.substring(
+                                            0,
+                                            text.length - 1 < 0
+                                                ? 0
+                                                : text.length - 1));
+                                      }(),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          } else {
+            return const Center(
+              child: SizedBox(
+                width: 150,
+                height: 150,
+                child: CircularProgressIndicator(
+                  color: Palette.domjanColor,
+                  strokeWidth: 10,
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+}
