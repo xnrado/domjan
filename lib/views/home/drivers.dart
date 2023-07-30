@@ -15,21 +15,6 @@ class _DriversState extends State<Drivers> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Palette.backgroundColor,
-      appBar: AppBar(
-        centerTitle: true,
-        iconTheme: const IconThemeData(size: 36, color: Palette.domjanColor),
-        backgroundColor: Palette.backgroundColor,
-        title: const Text(
-          'Kierowcy',
-          style: TextStyle(color: Palette.domjanColor),
-        ),
-        bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1.5),
-            child: Container(
-              color: Palette.activeTextColor,
-              height: 1.5,
-            )),
-      ),
       body: FutureBuilder(
         future: getDrivers(),
         builder: (context, snapshot) {
@@ -43,9 +28,9 @@ class _DriversState extends State<Drivers> {
             );
           } else if (snapshot.hasData) {
             final Map<int, Driver> drivers = snapshot.data as Map<int, Driver>;
+            print(drivers);
             final List<Driver> driversValues = drivers.values.toList();
             final double width = MediaQuery.of(context).size.width - 20;
-            final double height = MediaQuery.of(context).size.height;
             final double idWidth = (width / 10) * 1;
             final double nameWidth = (width / 10) * 5 - 2;
             final double busesWidth = (width / 10) * 4;
@@ -112,7 +97,7 @@ class _DriversState extends State<Drivers> {
                                       const Duration(milliseconds: 200),
                                   pageBuilder: (context, animation,
                                           secondaryAnimation) =>
-                                      const Text("Test"),
+                                      DriverView(driver: drivers[index + 1]!),
                                   transitionsBuilder: (context, animation,
                                           secondaryAnimation, child) =>
                                       SlideTransition(
@@ -197,6 +182,41 @@ class _DriversState extends State<Drivers> {
           }
         },
       ),
+    );
+  }
+}
+
+class DriverView extends StatefulWidget {
+  final Driver driver;
+
+  DriverView({super.key, required this.driver});
+
+  @override
+  State<DriverView> createState() => _DriverViewState();
+}
+
+class _DriverViewState extends State<DriverView> {
+  @override
+  Widget build(BuildContext context) {
+    Driver driver = widget.driver;
+    return Scaffold(
+      backgroundColor: Palette.backgroundColor,
+      appBar: AppBar(
+        iconTheme: const IconThemeData(size: 36, color: Palette.domjanColor),
+        backgroundColor: Palette.backgroundColor,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      body: Text("Test"),
+      // ListView.separated(itemBuilder: itemBuilder, separatorBuilder: (context, index) => const Divider(
+      //                     color: Palette.activeTextColor,
+      //                     height: 5,
+      //                     thickness: 0.5,
+      //                   ), itemCount: )
     );
   }
 }

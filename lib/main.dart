@@ -10,10 +10,10 @@ import 'firebase_options.dart';
 
 import 'globals.dart' as globals;
 
-import 'views/login_view.dart';
+import 'views/login/login_view.dart';
 import 'views/home/home_view.dart';
-import 'views/code_view.dart';
-import 'views/resetPassword_view.dart';
+import 'views/login/code_view.dart';
+import 'views/login/resetPassword_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,8 +39,6 @@ Future<void> main() async {
       databaseName: dotenv.env['DB'] as String,
       secure: false);
   await globals.conn!.connect();
-  var code = await globals.conn!.execute(
-      "SELECT driver_code FROM drivers WHERE driver_mail='xnrad123@gmail.com'");
 
   runApp(const MyApp());
 }
@@ -76,16 +74,4 @@ class MyApp extends StatelessWidget {
       },
     );
   }
-}
-
-Future<Map> getPreferences() async {
-  var pref = {};
-
-  // Get last session preferences
-  pref['email'] = globals.prefs?.getString('email');
-  pref['password'] = globals.prefs?.getString('password');
-  pref['isRememberMe'] = globals.prefs?.getBool('remember');
-  pref['code'] = globals.prefs?.getString('code');
-
-  return pref;
 }

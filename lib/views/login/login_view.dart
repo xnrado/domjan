@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../palette.dart';
+import '../../palette.dart';
 
-import '../globals.dart' as globals;
+import '../../globals.dart' as globals;
 
-import 'home/home_view.dart';
+import '../home/home_view.dart';
 import 'resetPassword_view.dart';
 
 class LoginView extends StatefulWidget {
@@ -467,7 +467,7 @@ class _LoginViewState extends State<LoginView> {
             );
 
             // Route to HomeView
-            Navigator.of(context).push(
+            Navigator.of(context).pushAndRemoveUntil(
               PageRouteBuilder(
                 transitionDuration: const Duration(milliseconds: 200),
                 reverseTransitionDuration: const Duration(milliseconds: 200),
@@ -483,6 +483,7 @@ class _LoginViewState extends State<LoginView> {
                   child: child,
                 ),
               ),
+              (Route<dynamic> route) => false,
             );
           }
           // Wrong login credentials
