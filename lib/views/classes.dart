@@ -123,7 +123,8 @@ class Driver {
   final String driverSurname;
   final String driverCode;
   final String? driverMail;
-  final List? driverBuses;
+  final List<String>? driverBuses;
+  final List<int>? driverBusesId;
   final bool admin;
 
   Driver(
@@ -133,6 +134,7 @@ class Driver {
       required this.driverCode,
       this.driverMail,
       this.driverBuses = const [],
+      this.driverBusesId = const [],
       required this.admin});
 }
 
@@ -145,7 +147,8 @@ Future<Map<int, Driver>> getDrivers() async {
   driver_code, 
   driver_mail, 
   admin, 
-  bus_name 
+  bus_name, 
+  bus_id
 FROM 
   drivers d 
   LEFT JOIN buses b ON d.driver_id = b.bus_owner;""");
@@ -156,12 +159,11 @@ FROM
     final int driverId = row.typedColByName<int>('driver_id')!;
     final String driverName = row.typedColByName<String>('driver_name')!;
     final String driverSurname = row.typedColByName<String>('driver_surname')!;
-    print('uno');
     final String driverCode = row.typedColByName<String>('driver_code')!;
-    print('dos');
     final String? driverMail = row.typedColByName<String>('driver_mail');
     final bool admin = row.typedColByName<bool>('admin')!;
     final String? busName = row.typedColByName<String>('bus_name');
+    final int? busId = row.typedColByName<int>('bus_id');
 
     if (drivers[driverId] == null) {
       drivers[driverId] = Driver(
@@ -171,9 +173,11 @@ FROM
           driverCode: driverCode,
           driverMail: driverMail,
           driverBuses: busName != null ? [busName] : [],
+          driverBusesId: busId != null ? [busId] : [],
           admin: admin);
     } else {
-      drivers[driverId]!.driverBuses!.add(busName);
+      drivers[driverId]!.driverBuses!.add(busName!);
+      drivers[driverId]!.driverBusesId!.add(busId!);
     }
   }
 

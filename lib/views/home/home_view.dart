@@ -16,13 +16,12 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  int _selectedHomeIndex = 2;
+  int _selectedHomeIndex = 0;
   late ValueNotifier<int> _selectedDrawerIndex;
 
   @override
   void initState() {
     super.initState();
-    print('Drawer State Initialized');
     _selectedDrawerIndex = ValueNotifier(0);
   }
 
@@ -54,6 +53,12 @@ class _HomeViewState extends State<HomeView> {
         } else if (snapshot.data?.numOfRows == 0) {
           return const CodeView();
         } else if (snapshot.hasData) {
+          bool isAdmin = false;
+          for (final driver in snapshot.data!.rows) {
+            isAdmin = driver.typedColByName<bool>('admin')!;
+          }
+          globals.prefs!.setBool('admin', isAdmin);
+
           return StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
               return Scaffold(

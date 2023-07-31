@@ -2,6 +2,7 @@ import 'package:domjan/views/classes.dart';
 import 'package:flutter/material.dart';
 
 import '../../palette.dart';
+import '../../globals.dart' as globals;
 
 class Drivers extends StatefulWidget {
   const Drivers({super.key});
@@ -28,7 +29,6 @@ class _DriversState extends State<Drivers> {
             );
           } else if (snapshot.hasData) {
             final Map<int, Driver> drivers = snapshot.data as Map<int, Driver>;
-            print(drivers);
             final List<Driver> driversValues = drivers.values.toList();
             final double width = MediaQuery.of(context).size.width - 20;
             final double idWidth = (width / 10) * 1;
@@ -38,7 +38,7 @@ class _DriversState extends State<Drivers> {
             return DefaultTextStyle(
               style: const TextStyle(color: Palette.activeTextColor),
               child: InteractiveViewer(
-                panEnabled: false,
+                panEnabled: true,
                 minScale: 1,
                 maxScale: 3,
                 child: Column(
@@ -46,16 +46,18 @@ class _DriversState extends State<Drivers> {
                     Container(
                       height: 40,
                       decoration: const BoxDecoration(
-                          color: Palette.loginBox,
-                          border: Border(
-                              bottom: BorderSide(
-                                  color: Palette.activeTextColor, width: 1.5))),
+                        color: Palette.loginBox,
+                        border: Border(
+                          bottom: BorderSide(
+                              color: Palette.activeTextColor, width: 1.5),
+                        ),
+                      ),
                       child: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.only(left: 10),
                             width: idWidth,
-                            child: const Text('l.p'),
+                            child: const Text('ID'),
                           ),
                           const VerticalDivider(
                             color: Palette.inactiveTextColor,
@@ -199,11 +201,13 @@ class _DriverViewState extends State<DriverView> {
   @override
   Widget build(BuildContext context) {
     Driver driver = widget.driver;
+    final double width = MediaQuery.of(context).size.width - 20;
+
     return Scaffold(
       backgroundColor: Palette.backgroundColor,
       appBar: AppBar(
         iconTheme: const IconThemeData(size: 36, color: Palette.domjanColor),
-        backgroundColor: Palette.backgroundColor,
+        backgroundColor: Palette.appBarColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -211,12 +215,165 @@ class _DriverViewState extends State<DriverView> {
           },
         ),
       ),
-      body: Text("Test"),
+      body: InteractiveViewer(
+        panEnabled: true,
+        minScale: 1,
+        maxScale: 3,
+        child: DefaultTextStyle(
+          style: const TextStyle(color: Palette.activeTextColor),
+          child: Column(
+            children: [
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: Palette.backgroundColor,
+                      border: Border(
+                        bottom: BorderSide(
+                            color: Palette.activeTextColor, width: 1.0),
+                      ),
+                    ),
+                    constraints: const BoxConstraints(minHeight: 50),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Kierowca',
+                          style: TextStyle(fontSize: 20),
+                        )
+                      ],
+                    ),
+                  )
+                ] +
+                staticFields(width, driver) +
+                [
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: Palette.loginBox,
+                      border: Border(
+                        top: BorderSide(
+                            color: Palette.activeTextColor, width: 2.0),
+                        bottom: BorderSide(
+                            color: Palette.activeTextColor, width: 1.0),
+                      ),
+                    ),
+                    constraints: const BoxConstraints(minHeight: 50),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Pojazdy pod opieką',
+                          style: TextStyle(fontSize: 20),
+                        )
+                      ],
+                    ),
+                  )
+                ] +
+                [],
+          ),
+        ),
+      ),
       // ListView.separated(itemBuilder: itemBuilder, separatorBuilder: (context, index) => const Divider(
       //                     color: Palette.activeTextColor,
       //                     height: 5,
       //                     thickness: 0.5,
       //                   ), itemCount: )
     );
+  }
+
+  List<Container> staticFields(double width, Driver driver) {
+    List<Container> fields = [];
+    List<List<String>> names = [];
+    if (globals.prefs!.getBool('admin')!) {
+      names = [
+        ['ID', driver.driverId.toString()],
+        ['Imie i nazwisko', '${driver.driverName} ${driver.driverSurname}'],
+        ['Kod kierowcy', '${driver.driverCode}'],
+        ['E-mail kierowcy', '${driver.driverMail}']
+      ];
+    } else {
+      names = [
+        ['ID', driver.driverId.toString()],
+        ['Imie i nazwisko', '${driver.driverName} ${driver.driverSurname}']
+      ];
+    }
+    for (final (index, entry) in names.indexed) {
+      fields.add(
+        Container(
+          decoration: BoxDecoration(
+            color: index % 2 == 0 ? Palette.loginBox : Palette.backgroundColor,
+            border: const Border(
+              bottom: BorderSide(color: Palette.activeTextColor, width: 1.0),
+            ),
+          ),
+          constraints: const BoxConstraints(minHeight: 50),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.only(left: 10),
+                width: width / 2,
+                child: Text(entry[0]),
+              ),
+              Container(
+                padding: const EdgeInsets.only(left: 10),
+                width: width / 2,
+                child: Text(
+                  entry[1] == 'null' ? '<Brak>' : entry[1],
+                  textAlign: TextAlign.end,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return fields;
+  }
+
+  List<Container> vehicleFields(double width, Driver driver) {
+    List<Container> fields = [];
+    List<List<String>> names = [];
+    if (globals.prefs!.getBool('admin')!) {
+      names = [
+        ['ID', driver.driverId.toString()],
+        ['Imie i nazwisko', '${driver.driverName} ${driver.driverSurname}'],
+        ['Kod kierowcy', '${driver.driverCode}'],
+        ['E-mail kierowcy', '${driver.driverMail}']
+      ];
+    } else {
+      names = [
+        ['ID', driver.driverId.toString()],
+        ['Imie i nazwisko', '${driver.driverName} ${driver.driverSurname}']
+      ];
+    }
+    for (final (index, entry) in names.indexed) {
+      fields.add(
+        Container(
+          decoration: BoxDecoration(
+            color: index % 2 == 0 ? Palette.loginBox : Palette.backgroundColor,
+            border: const Border(
+              bottom: BorderSide(color: Palette.activeTextColor, width: 1.0),
+            ),
+          ),
+          constraints: const BoxConstraints(minHeight: 50),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.only(left: 10),
+                width: width / 2,
+                child: Text(entry[0]),
+              ),
+              Container(
+                padding: const EdgeInsets.only(left: 10),
+                width: width / 2,
+                child: Text(
+                  entry[1] == 'null' ? '<Brak>' : entry[1],
+                  textAlign: TextAlign.end,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return fields;
   }
 }

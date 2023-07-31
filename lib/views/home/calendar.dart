@@ -15,8 +15,7 @@ class Calendar extends StatefulWidget {
 }
 
 class _CalendarState extends State<Calendar> {
-  late ValueNotifier<List<Event>> _selectedEvents =
-      ValueNotifier(_getEventsForDay(_focusedDay));
+  late ValueNotifier<List<Event>> _selectedEvents;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   Map<DateTime, List<Event>> yEvents = {};
