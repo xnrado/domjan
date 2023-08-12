@@ -215,62 +215,88 @@ class _DriverViewState extends State<DriverView> {
           },
         ),
       ),
-      body: InteractiveViewer(
-        panEnabled: true,
-        minScale: 1,
-        maxScale: 3,
-        child: DefaultTextStyle(
-          style: const TextStyle(color: Palette.activeTextColor),
-          child: Column(
-            children: [
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: Palette.backgroundColor,
-                      border: Border(
-                        bottom: BorderSide(
-                            color: Palette.activeTextColor, width: 1.0),
-                      ),
-                    ),
-                    constraints: const BoxConstraints(minHeight: 50),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Kierowca',
-                          style: TextStyle(fontSize: 20),
-                        )
-                      ],
-                    ),
-                  )
-                ] +
-                staticFields(width, driver) +
-                [
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: Palette.loginBox,
-                      border: Border(
-                        top: BorderSide(
-                            color: Palette.activeTextColor, width: 2.0),
-                        bottom: BorderSide(
-                            color: Palette.activeTextColor, width: 1.0),
-                      ),
-                    ),
-                    constraints: const BoxConstraints(minHeight: 50),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Pojazdy pod opieką',
-                          style: TextStyle(fontSize: 20),
-                        )
-                      ],
-                    ),
-                  )
-                ] +
-                [],
-          ),
-        ),
-      ),
+      body: FutureBuilder(
+          future: globals.conn!.execute(
+              'SELECT * FROM buses WHERE bus_owner = ${driver.driverId}'),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Center(
+                child: Text(
+                  'Nie udało się załadować informacji\no kierowcy.',
+                  style: TextStyle(color: Palette.domjanColor, fontSize: 24),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            } else if (snapshot.hasData) {
+              return InteractiveViewer(
+                panEnabled: true,
+                minScale: 1,
+                maxScale: 3,
+                child: DefaultTextStyle(
+                  style: const TextStyle(color: Palette.activeTextColor),
+                  child: Column(
+                    children: [
+                          Container(
+                            decoration: const BoxDecoration(
+                              color: Palette.backgroundColor,
+                              border: Border(
+                                bottom: BorderSide(
+                                    color: Palette.activeTextColor, width: 1.0),
+                              ),
+                            ),
+                            constraints: const BoxConstraints(minHeight: 50),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Kierowca',
+                                  style: TextStyle(fontSize: 20),
+                                )
+                              ],
+                            ),
+                          )
+                        ] +
+                        staticFields(width, driver) +
+                        [
+                          Container(
+                            decoration: const BoxDecoration(
+                              color: Palette.loginBox,
+                              border: Border(
+                                top: BorderSide(
+                                    color: Palette.activeTextColor, width: 2.0),
+                                bottom: BorderSide(
+                                    color: Palette.activeTextColor, width: 1.0),
+                              ),
+                            ),
+                            constraints: const BoxConstraints(minHeight: 50),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Pojazdy pod opieką',
+                                  style: TextStyle(fontSize: 20),
+                                )
+                              ],
+                            ),
+                          )
+                        ] +
+                        [],
+                  ),
+                ),
+              );
+            } else {
+              return const Center(
+                child: SizedBox(
+                  width: 150,
+                  height: 150,
+                  child: CircularProgressIndicator(
+                    color: Palette.domjanColor,
+                    strokeWidth: 10,
+                  ),
+                ),
+              );
+            }
+          }),
       // ListView.separated(itemBuilder: itemBuilder, separatorBuilder: (context, index) => const Divider(
       //                     color: Palette.activeTextColor,
       //                     height: 5,

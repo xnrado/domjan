@@ -138,8 +138,8 @@ class Driver {
       required this.admin});
 }
 
-Future<Map<int, Driver>> getDrivers() async {
-  var query = await globals.conn!.execute("""
+Future<Map<int, Driver>> getDrivers({String? where, String? like}) async {
+  String queryText = """
   SELECT 
   driver_id, 
   driver_name, 
@@ -151,7 +151,20 @@ Future<Map<int, Driver>> getDrivers() async {
   bus_id
 FROM 
   drivers d 
-  LEFT JOIN buses b ON d.driver_id = b.bus_owner;""");
+  LEFT JOIN buses b ON d.driver_id = b.bus_owner""";
+
+  // Check if there are conditions
+  if ((where?.isNotEmpty ?? false) && (like?.isNotEmpty ?? false)) {
+    // If the condition is a list
+    if (like![0] == '(') {
+      queryText = "$queryText WHERE $where IN $like";
+    } //Else the condition is a ==
+    else {
+      queryText = "$queryText WHERE $where LIKE $like";
+    }
+  }
+
+  var query = await globals.conn!.execute(queryText);
 
   Map<int, Driver> drivers = {};
 
@@ -182,4 +195,32 @@ FROM
   }
 
   return drivers;
+}
+
+class Bus {
+  final int busId;
+  final String busName;
+  final String busModel;
+  final String? busYear;
+  final String? busCapacity;
+  final String? busVin;
+  final String busRegion;
+  final String busPlate;
+  final List<int>? driverIds;
+  final List<String>? driverNames;
+  final List<String>? driverSurnames;
+
+  Bus({
+    required this.busId,
+    required this.busName,
+    required this.busModel,
+    this.busYear,
+    this.busCapacity,
+    this.busVin,
+    required this.busRegion,
+    required this.busPlate,
+    this.driverIds = const [],
+    this.driverNames = const [],
+    this.driverSurnames = const [],
+  });
 }
