@@ -50,8 +50,9 @@ class _CalendarState extends State<Calendar> {
             if (snapshot.hasError) {
               return const Center(
                 child: Text(
-                  'Nie udało się załadować informacji.',
+                  'Nie udało się załadować\ninformacji o kalendarzu.',
                   style: TextStyle(color: Palette.domjanColor, fontSize: 24),
+                  textAlign: TextAlign.center,
                 ),
               );
             } else if (snapshot.hasData) {

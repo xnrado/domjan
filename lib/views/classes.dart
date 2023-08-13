@@ -206,9 +206,9 @@ class Bus {
   final String? busVin;
   final String busRegion;
   final String busPlate;
-  final List<int>? driverIds;
-  final List<String>? driverNames;
-  final List<String>? driverSurnames;
+  final int? driverId;
+  final String? driverName;
+  final String? driverSurname;
 
   Bus({
     required this.busId,
@@ -219,8 +219,74 @@ class Bus {
     this.busVin,
     required this.busRegion,
     required this.busPlate,
-    this.driverIds = const [],
-    this.driverNames = const [],
-    this.driverSurnames = const [],
+    this.driverId,
+    this.driverName,
+    this.driverSurname,
   });
+}
+
+Future<Map<int, Bus>> getBuses({String? where, String? like}) async {
+  String queryText = """
+  SELECT 
+  bus_id, 
+  bus_name, 
+  bus_model, 
+  bus_year, 
+  bus_capacity, 
+  bus_vin,
+  bus_region,
+  bus_plate,
+  driver_id,
+  driver_name,
+  driver_surname
+FROM 
+  buses b
+  LEFT JOIN drivers d ON b.bus_owner = d.driver_id""";
+
+  // Check if there are conditions
+  if ((where?.isNotEmpty ?? false) && (like?.isNotEmpty ?? false)) {
+    // If the condition is a list
+    if (like![0] == '(') {
+      queryText = "$queryText WHERE $where IN '$like'";
+    } //Else the condition is a ==
+    else {
+      queryText = "$queryText WHERE $where LIKE '$like'";
+    }
+  }
+
+  queryText = queryText + ' ORDER BY bus_id';
+
+  var query = await globals.conn!.execute(queryText);
+
+  Map<int, Bus> buses = {};
+
+  for (final row in query.rows) {
+    final int busId = row.typedColByName<int>('bus_id')!;
+    final String busName = row.typedColByName<String>('bus_name')!;
+    final String busModel = row.typedColByName<String>('bus_model')!;
+    final String? busYear = row.typedColByName<String>('bus_year');
+    final String? busCapacity = row.typedColByName<String>('bus_capacity');
+    final String? busVin = row.typedColByName<String>('bus_vin');
+    final String busRegion = row.typedColByName<String>('bus_region')!;
+    final String busPlate = row.typedColByName<String>('bus_plate')!;
+    final int? driverId = row.typedColByName<int>('driver_id');
+    final String? driverName = row.typedColByName<String>('driver_name');
+    final String? driverSurname = row.typedColByName<String>('driver_surname');
+
+    buses[busId] = Bus(
+      busId: busId,
+      busName: busName,
+      busModel: busModel,
+      busYear: busYear,
+      busCapacity: busCapacity,
+      busVin: busVin,
+      busRegion: busRegion,
+      busPlate: busPlate,
+      driverId: driverId,
+      driverName: driverName,
+      driverSurname: driverSurname,
+    );
+  }
+
+  return buses;
 }

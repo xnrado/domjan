@@ -1,18 +1,17 @@
 import 'package:domjan/views/classes.dart';
-import 'package:domjan/views/home/buses.dart';
 import 'package:flutter/material.dart';
 
 import '../../palette.dart';
 import '../../globals.dart' as globals;
 
-class Drivers extends StatefulWidget {
-  const Drivers({super.key});
+class Buses extends StatefulWidget {
+  const Buses({super.key});
 
   @override
-  State<Drivers> createState() => _DriversState();
+  State<Buses> createState() => _BusesState();
 }
 
-class _DriversState extends State<Drivers> {
+class _BusesState extends State<Buses> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,8 +19,9 @@ class _DriversState extends State<Drivers> {
         body: () {
           final double width = MediaQuery.of(context).size.width - 20;
           final double idWidth = (width / 10) * 1;
-          final double nameWidth = (width / 10) * 5 - 2;
-          final double busesWidth = (width / 10) * 4;
+          final double nameWidth = (width / 10) * 4 - 2;
+          final double plateWidth = (width / 10) * 2.4 - 1;
+          final double ownerWidth = (width / 10) * 2.6;
 
           return DefaultTextStyle(
             style: const TextStyle(color: Palette.activeTextColor),
@@ -54,7 +54,7 @@ class _DriversState extends State<Drivers> {
                         Container(
                           padding: const EdgeInsets.only(left: 10),
                           width: nameWidth,
-                          child: const Text('Kierowca'),
+                          child: const Text('Pojazd'),
                         ),
                         const VerticalDivider(
                           color: Palette.inactiveTextColor,
@@ -62,13 +62,22 @@ class _DriversState extends State<Drivers> {
                         ),
                         Container(
                           padding: const EdgeInsets.only(left: 10),
-                          width: busesWidth,
-                          child: const Text('Pojazdy'),
+                          width: plateWidth,
+                          child: const Text('Rejestracja'),
+                        ),
+                        const VerticalDivider(
+                          color: Palette.inactiveTextColor,
+                          width: 1,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.only(left: 10),
+                          width: ownerWidth,
+                          child: const Text('Opiekun'),
                         ),
                       ],
                     ),
                   ),
-                  const DriverFields(),
+                  BusFields(),
                 ],
               ),
             ),
@@ -77,20 +86,21 @@ class _DriversState extends State<Drivers> {
   }
 }
 
-class DriverFields extends StatelessWidget {
-  const DriverFields({
-    super.key,
-  });
+class BusFields extends StatelessWidget {
+  String? like;
+
+  BusFields({super.key, this.like});
 
   @override
   Widget build(BuildContext context) {
     final double width = MediaQuery.of(context).size.width - 20;
     final double idWidth = (width / 10) * 1;
-    final double nameWidth = (width / 10) * 5 - 2;
-    final double busesWidth = (width / 10) * 4;
+    final double nameWidth = (width / 10) * 4 - 2;
+    final double plateWidth = (width / 10) * 2.4 - 1;
+    final double ownerWidth = (width / 10) * 2.6;
 
     return FutureBuilder(
-      future: getDrivers(),
+      future: getBuses(where: 'driver_id', like: like),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Center(
@@ -101,8 +111,8 @@ class DriverFields extends StatelessWidget {
             ),
           );
         } else if (snapshot.hasData) {
-          final Map<int, Driver> drivers = snapshot.data as Map<int, Driver>;
-          final List<Driver> driversValues = drivers.values.toList();
+          final Map<int, Bus> buses = snapshot.data as Map<int, Bus>;
+          final List<Bus> busesValues = buses.values.toList();
           return Expanded(
             child: ListView.separated(
               separatorBuilder: (context, index) => const Divider(
@@ -110,7 +120,7 @@ class DriverFields extends StatelessWidget {
                 height: 5,
                 thickness: 0.5,
               ),
-              itemCount: driversValues.length,
+              itemCount: busesValues.length,
               itemBuilder: (context, index) {
                 return GestureDetector(
                   onTap: () {
@@ -120,7 +130,7 @@ class DriverFields extends StatelessWidget {
                         reverseTransitionDuration:
                             const Duration(milliseconds: 200),
                         pageBuilder: (context, animation, secondaryAnimation) =>
-                            DriverView(driver: drivers[index + 1]!),
+                            BusView(bus: buses[index + 1]!),
                         transitionsBuilder:
                             (context, animation, secondaryAnimation, child) =>
                                 SlideTransition(
@@ -144,8 +154,7 @@ class DriverFields extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.only(left: 10),
                             width: idWidth,
-                            child:
-                                Text(driversValues[index].driverId.toString()),
+                            child: Text(busesValues[index].busId.toString()),
                           ),
                           const VerticalDivider(
                             color: Palette.inactiveTextColor,
@@ -154,8 +163,14 @@ class DriverFields extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.only(left: 10),
                             width: nameWidth,
-                            child: Text(
-                                '${driversValues[index].driverName} ${driversValues[index].driverSurname[0]}.'),
+                            child: Text.rich(TextSpan(children: <TextSpan>[
+                              TextSpan(
+                                text: '${busesValues[index].busName}\n',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: busesValues[index].busModel)
+                            ])),
                           ),
                           const VerticalDivider(
                             color: Palette.inactiveTextColor,
@@ -163,15 +178,25 @@ class DriverFields extends StatelessWidget {
                           ),
                           Container(
                             padding: const EdgeInsets.only(left: 10),
-                            width: busesWidth,
+                            width: plateWidth,
+                            child: Text(
+                                '${busesValues[index].busRegion} ${busesValues[index].busPlate}'),
+                          ),
+                          const VerticalDivider(
+                            color: Palette.inactiveTextColor,
+                            width: 1,
+                          ),
+                          Container(
+                            padding: const EdgeInsets.only(left: 10),
+                            width: ownerWidth,
                             child: () {
-                              String text = '';
-                              for (final bus
-                                  in driversValues[index].driverBuses!) {
-                                text = '$text$bus\n';
+                              if (busesValues[index].driverName?.isNotEmpty ??
+                                  false) {
+                                return Text(
+                                    '${busesValues[index].driverName} ${busesValues[index].driverSurname![0]}');
+                              } else {
+                                return const Text('<Brak>');
                               }
-                              return Text(text.substring(0,
-                                  text.length - 1 < 0 ? 0 : text.length - 1));
                             }(),
                           ),
                         ],
@@ -199,19 +224,19 @@ class DriverFields extends StatelessWidget {
   }
 }
 
-class DriverView extends StatefulWidget {
-  final Driver driver;
+class BusView extends StatefulWidget {
+  final Bus bus;
 
-  DriverView({super.key, required this.driver});
+  BusView({super.key, required this.bus});
 
   @override
-  State<DriverView> createState() => _DriverViewState();
+  State<BusView> createState() => _BusViewState();
 }
 
-class _DriverViewState extends State<DriverView> {
+class _BusViewState extends State<BusView> {
   @override
   Widget build(BuildContext context) {
-    Driver driver = widget.driver;
+    Bus bus = widget.bus;
     final double width = MediaQuery.of(context).size.width - 20;
 
     return Scaffold(
@@ -227,8 +252,8 @@ class _DriverViewState extends State<DriverView> {
         ),
       ),
       body: FutureBuilder(
-        future: globals.conn!.execute(
-            'SELECT * FROM buses WHERE bus_owner = ${driver.driverId}'),
+        future: globals.conn!
+            .execute('SELECT * FROM buses WHERE bus_owner = ${bus.busId}'),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(
@@ -260,43 +285,14 @@ class _DriverViewState extends State<DriverView> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  'Kierowca',
+                                  'Pojazd',
                                   style: TextStyle(fontSize: 20),
                                 )
                               ],
                             ),
                           )
                         ] +
-                        staticFields(width, driver) +
-                        [
-                          Container(
-                            decoration: const BoxDecoration(
-                              color: Palette.loginBox,
-                              border: Border(
-                                top: BorderSide(
-                                    color: Palette.activeTextColor, width: 2.0),
-                                bottom: BorderSide(
-                                    color: Palette.activeTextColor, width: 1.0),
-                              ),
-                            ),
-                            constraints: const BoxConstraints(minHeight: 50),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Pojazdy pod opieką',
-                                  style: TextStyle(fontSize: 20),
-                                )
-                              ],
-                            ),
-                          )
-                        ] +
-                        [
-                          Container(
-                              child: BusFields(
-                            like: driver.driverId.toString(),
-                          ))
-                        ]),
+                        busFields(width, bus)),
               ),
             );
           } else {
@@ -316,69 +312,30 @@ class _DriverViewState extends State<DriverView> {
     );
   }
 
-  List<Container> staticFields(double width, Driver driver) {
+  List<Container> busFields(double width, Bus bus) {
     List<Container> fields = [];
     List<List<String>> names = [];
     if (globals.prefs!.getBool('admin')!) {
       names = [
-        ['ID', driver.driverId.toString()],
-        ['Imie i nazwisko', '${driver.driverName} ${driver.driverSurname}'],
-        ['Kod kierowcy', '${driver.driverCode}'],
-        ['E-mail kierowcy', '${driver.driverMail}']
+        ['ID', bus.busId.toString()],
+        ['Nazwa', bus.busName],
+        ['Model', bus.busModel],
+        ['Rocznik', bus.busYear.toString()],
+        ['Liczba Miejsc', bus.busCapacity ?? '-'],
+        ['VIN', bus.busVin ?? '-'],
+        ['Rejestracja', '${bus.busRegion} ${bus.busPlate}'],
+        ['Opiekun', '${bus.driverName} ${bus.driverSurname}']
       ];
     } else {
       names = [
-        ['ID', driver.driverId.toString()],
-        ['Imie i nazwisko', '${driver.driverName} ${driver.driverSurname}']
-      ];
-    }
-    for (final (index, entry) in names.indexed) {
-      fields.add(
-        Container(
-          decoration: BoxDecoration(
-            color: index % 2 == 0 ? Palette.loginBox : Palette.backgroundColor,
-            border: const Border(
-              bottom: BorderSide(color: Palette.activeTextColor, width: 1.0),
-            ),
-          ),
-          constraints: const BoxConstraints(minHeight: 50),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.only(left: 10),
-                width: width / 2,
-                child: Text(entry[0]),
-              ),
-              Container(
-                padding: const EdgeInsets.only(left: 10),
-                width: width / 2,
-                child: Text(
-                  entry[1] == 'null' ? '<Brak>' : entry[1],
-                  textAlign: TextAlign.end,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    return fields;
-  }
-
-  List<Container> vehicleFields(double width, Driver driver) {
-    List<Container> fields = [];
-    List<List<String>> names = [];
-    if (globals.prefs!.getBool('admin')!) {
-      names = [
-        ['ID', driver.driverId.toString()],
-        ['Imie i nazwisko', '${driver.driverName} ${driver.driverSurname}'],
-        ['Kod kierowcy', '${driver.driverCode}'],
-        ['E-mail kierowcy', '${driver.driverMail}']
-      ];
-    } else {
-      names = [
-        ['ID', driver.driverId.toString()],
-        ['Imie i nazwisko', '${driver.driverName} ${driver.driverSurname}']
+        ['ID', bus.busId.toString()],
+        ['Nazwa', bus.busName],
+        ['Model', bus.busModel],
+        ['Rocznik', bus.busYear.toString()],
+        ['Liczba Miejsc', bus.busCapacity ?? '-'],
+        ['VIN', bus.busVin ?? '-'],
+        ['Rejestracja', '${bus.busRegion} ${bus.busPlate}'],
+        ['Opiekun', '${bus.driverName} ${bus.driverSurname}']
       ];
     }
     for (final (index, entry) in names.indexed) {

@@ -1,3 +1,4 @@
+import 'package:domjan/views/home/buses.dart';
 import 'package:domjan/views/home/drivers.dart';
 import 'package:domjan/views/login/code_view.dart';
 import 'package:domjan/views/login/login_view.dart';
@@ -44,10 +45,17 @@ class _HomeViewState extends State<HomeView> {
           'SELECT * FROM drivers WHERE driver_mail = "${FirebaseAuth.instance.currentUser?.email}"'),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Center(
-            child: Text(
-              'Nie udało się załadować informacji.',
-              style: TextStyle(color: Palette.domjanColor, fontSize: 24),
+          return Container(
+            color: Palette.backgroundColor,
+            child: const Center(
+              child: Text(
+                'Nie udało się\nzainicjować aplikacji.\n\nSpróbuj zresetować aplikację\na jeśli to nie pomoże,\nto skontaktuj się z adminem.',
+                style: TextStyle(
+                    decoration: TextDecoration.none,
+                    color: Palette.domjanColor,
+                    fontSize: 20),
+                textAlign: TextAlign.center,
+              ),
             ),
           );
         } else if (snapshot.data?.numOfRows == 0) {
@@ -298,7 +306,7 @@ class _HomeViewState extends State<HomeView> {
                       }
                     case 3:
                       {
-                        return const Drivers();
+                        return const Buses();
                       }
                     case 4:
                       {
