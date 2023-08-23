@@ -324,7 +324,12 @@ class _BusViewState extends State<BusView> {
         ['Liczba Miejsc', bus.busCapacity ?? '-'],
         ['VIN', bus.busVin ?? '-'],
         ['Rejestracja', '${bus.busRegion} ${bus.busPlate}'],
-        ['Opiekun', '${bus.driverName} ${bus.driverSurname}']
+        [
+          'Opiekun',
+          bus.driverName?.isNotEmpty ?? false
+              ? '${bus.driverName} ${bus.driverSurname}'
+              : 'null'
+        ]
       ];
     } else {
       names = [
@@ -335,7 +340,12 @@ class _BusViewState extends State<BusView> {
         ['Liczba Miejsc', bus.busCapacity ?? '-'],
         ['VIN', bus.busVin ?? '-'],
         ['Rejestracja', '${bus.busRegion} ${bus.busPlate}'],
-        ['Opiekun', '${bus.driverName} ${bus.driverSurname}']
+        [
+          'Opiekun',
+          bus.driverName?.isNotEmpty ?? false
+              ? '${bus.driverName} ${bus.driverSurname}'
+              : 'null'
+        ]
       ];
     }
     for (final (index, entry) in names.indexed) {

@@ -256,13 +256,30 @@ class _DriverViewState extends State<DriverView> {
                               ),
                             ),
                             constraints: const BoxConstraints(minHeight: 50),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            child: const Stack(
+                              alignment: AlignmentDirectional.center,
                               children: [
-                                Text(
-                                  'Kierowca',
-                                  style: TextStyle(fontSize: 20),
-                                )
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Kierowca',
+                                      style: TextStyle(fontSize: 20),
+                                    ),
+                                  ],
+                                ),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: IconButton(
+                                    onPressed: null,
+                                    icon: Icon(
+                                      Icons.edit,
+                                      color: Palette.cursorColor,
+                                      size: 32,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           )
@@ -292,6 +309,7 @@ class _DriverViewState extends State<DriverView> {
                           )
                         ] +
                         [
+                          // ignore: avoid_unnecessary_containers
                           Container(
                               child: BusFields(
                             like: driver.driverId.toString(),

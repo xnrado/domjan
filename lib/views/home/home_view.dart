@@ -4,6 +4,7 @@ import 'package:domjan/views/login/code_view.dart';
 import 'package:domjan/views/login/login_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../palette.dart';
 import '../../globals.dart' as globals;
 
@@ -18,12 +19,12 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   int _selectedHomeIndex = 0;
-  late ValueNotifier<int> _selectedDrawerIndex;
+  late int selectedDrawerIndex;
 
   @override
   void initState() {
     super.initState();
-    _selectedDrawerIndex = ValueNotifier(0);
+    selectedDrawerIndex = 0;
   }
 
   void _onHomeItemTapped(int index) {
@@ -35,327 +36,330 @@ class _HomeViewState extends State<HomeView> {
   }
 
   void _onDrawerItemTapped(int index) {
-    _selectedDrawerIndex.value = index;
+    setState(
+      () {
+        selectedDrawerIndex = index;
+        print(selectedDrawerIndex);
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: globals.conn?.execute(
-          'SELECT * FROM drivers WHERE driver_mail = "${FirebaseAuth.instance.currentUser?.email}"'),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Container(
-            color: Palette.backgroundColor,
-            child: const Center(
-              child: Text(
-                'Nie udało się\nzainicjować aplikacji.\n\nSpróbuj zresetować aplikację\na jeśli to nie pomoże,\nto skontaktuj się z adminem.',
-                style: TextStyle(
-                    decoration: TextDecoration.none,
-                    color: Palette.domjanColor,
-                    fontSize: 20),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          );
-        } else if (snapshot.data?.numOfRows == 0) {
-          return const CodeView();
-        } else if (snapshot.hasData) {
-          bool isAdmin = false;
-          for (final driver in snapshot.data!.rows) {
-            isAdmin = driver.typedColByName<bool>('admin')!;
-          }
-          globals.prefs!.setBool('admin', isAdmin);
-
-          return StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return Scaffold(
-                backgroundColor: Palette.backgroundColor,
-                appBar: AppBar(
-                  scrolledUnderElevation: 0,
-                  iconTheme:
-                      const IconThemeData(size: 36, color: Palette.domjanColor),
-                  backgroundColor: Palette.appBarColor,
-                  actions: <Widget>[
-                    Builder(
-                      builder: (context) {
-                        // The current selected driver/bus on the appbar
-                        String? currentDrawerSelection =
-                            globals.prefs?.getString('currentDrawerSelection');
-                        // Check if nothing selected yet
-                        currentDrawerSelection ??= 'Wybierz Kierowcę.';
-                        Icon icon;
-                        // Check if it's a bus or a driver by looking at the last char
-                        if (currentDrawerSelection[
-                                currentDrawerSelection.length - 1] ==
-                            '.') {
-                          icon = const Icon(
-                            Icons.person,
-                            color: Palette.domjanColor,
-                          );
-                        } else {
-                          icon = const Icon(
-                            Icons.directions_bus,
-                            color: Palette.domjanColor,
-                          );
-                        }
-                        return GestureDetector(
-                          onTap: () {
-                            Scaffold.of(context).openEndDrawer();
-                          },
-                          child: Row(
-                            children: [
-                              Text(
-                                currentDrawerSelection,
-                                style:
-                                    const TextStyle(color: Palette.domjanColor),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: icon,
-                              ),
-                            ],
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return Scaffold(
+          backgroundColor: Palette.backgroundColor,
+          appBar: AppBar(
+            scrolledUnderElevation: 0,
+            iconTheme:
+                const IconThemeData(size: 36, color: Palette.domjanColor),
+            backgroundColor: Palette.appBarColor,
+            actions: <Widget>[
+              Builder(
+                builder: (context) {
+                  // The current selected driver/bus on the appbar
+                  String? currentDrawerSelection =
+                      globals.prefs?.getString('currentDrawerSelection');
+                  // Check if nothing selected yet
+                  currentDrawerSelection ??= 'Wybierz Kierowcę.';
+                  Icon icon;
+                  // Check if it's a bus or a driver by looking at the last char
+                  if (currentDrawerSelection[
+                          currentDrawerSelection.length - 1] ==
+                      '.') {
+                    icon = const Icon(
+                      Icons.person,
+                      color: Palette.domjanColor,
+                    );
+                  } else {
+                    icon = const Icon(
+                      Icons.directions_bus,
+                      color: Palette.domjanColor,
+                    );
+                  }
+                  return GestureDetector(
+                    onTap: () {
+                      Scaffold.of(context).openEndDrawer();
+                    },
+                    child: Row(
+                      children: [
+                        Text(
+                          currentDrawerSelection,
+                          style: const TextStyle(color: Palette.domjanColor),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: icon,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              )
+            ],
+          ),
+          drawer: Drawer(
+            backgroundColor: Palette.backgroundColor,
+            child: ListView(
+              children: [
+                SizedBox(
+                  height: 96,
+                  child: DrawerHeader(
+                    child: Column(
+                      children: [
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Twoje konto DOM-JAN',
+                            style: TextStyle(
+                                color: Palette.activeTextColor, fontSize: 24),
                           ),
-                        );
-                      },
-                    )
-                  ],
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            FirebaseAuth.instance.currentUser?.email ??
+                                'dummy@',
+                            style: const TextStyle(
+                                color: Palette.linkColor, fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                drawer: Drawer(
-                  backgroundColor: Palette.backgroundColor,
-                  child: ListView(
-                    children: [
-                      SizedBox(
-                        height: 96,
-                        child: DrawerHeader(
-                          child: Column(
-                            children: [
-                              const Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  'Twoje konto DOM-JAN',
-                                  style: TextStyle(
-                                      color: Palette.activeTextColor,
-                                      fontSize: 24),
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  FirebaseAuth.instance.currentUser?.email ??
-                                      'dummy@',
-                                  style: const TextStyle(
-                                      color: Palette.linkColor, fontSize: 14),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
+                GestureDetector(
+                  onTap: () {
+                    _onHomeItemTapped(2);
+                    Navigator.pop(context);
+                  },
+                  child: const ListTile(
+                    leading: Icon(
+                      Icons.person,
+                      size: 22,
+                      color: Palette.activeTextColor,
+                    ),
+                    title: Text(
+                      'Kierowcy',
+                      style: TextStyle(color: Palette.activeTextColor),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _onHomeItemTapped(3);
+                    Navigator.pop(context);
+                  },
+                  child: const ListTile(
+                    leading: Icon(
+                      Icons.directions_bus,
+                      size: 22,
+                      color: Palette.activeTextColor,
+                    ),
+                    title: Text(
+                      'Pojazdy',
+                      style: TextStyle(color: Palette.activeTextColor),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _onHomeItemTapped(4);
+                    Navigator.pop(context);
+                  },
+                  child: const ListTile(
+                    leading: Icon(
+                      Icons.phone,
+                      size: 22,
+                      color: Palette.activeTextColor,
+                    ),
+                    title: Text(
+                      'Kontakty',
+                      style: TextStyle(color: Palette.activeTextColor),
+                    ),
+                  ),
+                ),
+                globals.prefs!.getBool('adminConst')!
+                    ? GestureDetector(
                         onTap: () {
-                          _onHomeItemTapped(2);
-                          Navigator.pop(context);
-                        },
-                        child: const ListTile(
-                          leading: Icon(
-                            Icons.person,
-                            size: 22,
-                            color: Palette.activeTextColor,
-                          ),
-                          title: Text(
-                            'Kierowcy',
-                            style: TextStyle(color: Palette.activeTextColor),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          _onHomeItemTapped(3);
-                          Navigator.pop(context);
-                        },
-                        child: const ListTile(
-                          leading: Icon(
-                            Icons.directions_bus,
-                            size: 22,
-                            color: Palette.activeTextColor,
-                          ),
-                          title: Text(
-                            'Pojazdy',
-                            style: TextStyle(color: Palette.activeTextColor),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          _onHomeItemTapped(4);
-                          Navigator.pop(context);
-                        },
-                        child: const ListTile(
-                          leading: Icon(
-                            Icons.phone,
-                            size: 22,
-                            color: Palette.activeTextColor,
-                          ),
-                          title: Text(
-                            'Kontakty',
-                            style: TextStyle(color: Palette.activeTextColor),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Widget cancelButton = TextButton(
-                            child: const Text("Anuluj",
-                                style:
-                                    TextStyle(color: Palette.activeTextColor)),
-                            onPressed: () {
-                              Navigator.pop(context);
+                          setState(
+                            () {
+                              globals.prefs!.setBool(
+                                  'admin', !globals.prefs!.getBool('admin')!);
                             },
                           );
-                          Widget continueButton = TextButton(
-                            child: const Text(
-                              "Wyloguj",
-                              style: TextStyle(color: Palette.errorColor),
+                        },
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.star,
+                            size: 22,
+                            color: Palette.activeTextColor,
+                          ),
+                          trailing: Transform.scale(
+                            scale: 0.75,
+                            child: Switch(
+                              activeTrackColor: Palette.domjanColor,
+                              thumbColor:
+                                  MaterialStateProperty.resolveWith<Color?>(
+                                (Set<MaterialState> states) {
+                                  if (states.contains(MaterialState.selected)) {
+                                    return Palette.backgroundColor;
+                                  }
+                                  return Palette.activeTextColor;
+                                },
+                              ),
+                              thumbIcon:
+                                  MaterialStateProperty.resolveWith<Icon?>(
+                                (Set<MaterialState> states) {
+                                  if (states.contains(MaterialState.selected)) {
+                                    return const Icon(Icons.check);
+                                  }
+                                  return const Icon(Icons.close);
+                                },
+                              ),
+                              value: globals.prefs!.getBool('admin')!,
+                              onChanged: null,
                             ),
-                            onPressed: () {
-                              globals.prefs?.setBool('remember', false);
-                              FirebaseAuth.instance.signOut();
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                  builder: (context) {
-                                    return const LoginView();
-                                  },
-                                ),
-                                (route) => false,
-                              );
-                            },
-                          );
-
-                          showDialog(
-                            context: context,
-                            builder: ((context) {
-                              return AlertDialog(
-                                backgroundColor: Palette.backgroundColor,
-                                contentTextStyle: const TextStyle(
-                                    color: Palette.activeTextColor,
-                                    fontSize: 24),
-                                content: Container(
-                                  padding: const EdgeInsets.only(top: 16),
-                                  child: const Text(
-                                    'Czy na pewno\nchcesz się wylogować?',
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                actions: [cancelButton, continueButton],
-                              );
-                            }),
-                          );
-                        },
-                        child: const ListTile(
-                          leading: Icon(
-                            Icons.exit_to_app,
-                            size: 22,
-                            color: Palette.selectColor,
                           ),
-                          title: Text(
-                            'Wyloguj się',
-                            style: TextStyle(color: Palette.selectColor),
+                          title: const Text(
+                            'Admin',
+                            style: TextStyle(color: Palette.activeTextColor),
                           ),
                         ),
                       )
-                    ],
-                  ),
-                ),
-                bottomNavigationBar: Theme(
-                  data: ThemeData(splashFactory: NoSplash.splashFactory),
-                  child: BottomNavigationBar(
-                    backgroundColor: Palette.appBarColor,
-                    items: const [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.home_filled),
-                        label: 'Harmonogram',
+                    : const SizedBox(),
+                GestureDetector(
+                  onTap: () {
+                    Widget cancelButton = TextButton(
+                      child: const Text("Anuluj",
+                          style: TextStyle(color: Palette.activeTextColor)),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    );
+                    Widget continueButton = TextButton(
+                      child: const Text(
+                        "Wyloguj",
+                        style: TextStyle(color: Palette.errorColor),
                       ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.calendar_month),
-                        label: 'Kalendarz',
-                      ),
-                    ],
-                    selectedItemColor: _selectedHomeIndex > 1
-                        ? Palette.focusColor
-                        : Palette.domjanColor,
-                    unselectedItemColor: Palette.focusColor,
-                    currentIndex:
-                        _selectedHomeIndex > 1 ? 0 : _selectedHomeIndex,
-                    onTap: _onHomeItemTapped,
+                      onPressed: () {
+                        globals.prefs?.setBool('remember', false);
+                        FirebaseAuth.instance.signOut();
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return const LoginView();
+                            },
+                          ),
+                          (route) => false,
+                        );
+                      },
+                    );
+
+                    showDialog(
+                      context: context,
+                      builder: ((context) {
+                        return AlertDialog(
+                          backgroundColor: Palette.backgroundColor,
+                          contentTextStyle: const TextStyle(
+                              color: Palette.activeTextColor, fontSize: 24),
+                          content: Container(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: const Text(
+                              'Czy na pewno\nchcesz się wylogować?',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          actions: [cancelButton, continueButton],
+                        );
+                      }),
+                    );
+                  },
+                  child: const ListTile(
+                    leading: Icon(
+                      Icons.exit_to_app,
+                      size: 22,
+                      color: Palette.selectColor,
+                    ),
+                    title: Text(
+                      'Wyloguj się',
+                      style: TextStyle(color: Palette.selectColor),
+                    ),
                   ),
+                )
+              ],
+            ),
+          ),
+          bottomNavigationBar: Theme(
+            data: ThemeData(splashFactory: NoSplash.splashFactory),
+            child: BottomNavigationBar(
+              backgroundColor: Palette.appBarColor,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_filled),
+                  label: 'Harmonogram',
                 ),
-                body: () {
-                  switch (_selectedHomeIndex) {
-                    case 0:
-                      {
-                        return timeline();
-                      }
-                    case 1:
-                      {
-                        return const Calendar();
-                      }
-                    case 2:
-                      {
-                        return const Drivers();
-                      }
-                    case 3:
-                      {
-                        return const Buses();
-                      }
-                    case 4:
-                      {
-                        return timeline();
-                      }
-                  }
-                }(),
-                endDrawer: StatefulBuilder(
-                  builder: (context, setState) {
-                    return Drawer(
-                      backgroundColor: Palette.backgroundColor,
-                      child: ValueListenableBuilder(
-                          valueListenable: _selectedDrawerIndex,
-                          builder: (context, value, child) {
-                            return FutureBuilder(
-                              future: getDrawerFields(value),
-                              builder: (context, snapshot) {
-                                return ListView(
-                                  children: snapshot.data ??
-                                      [
-                                        const Text(
-                                          "Coś poszło nie tak, \nnie udało się pokazać kierowców.",
-                                          style: TextStyle(
-                                              color: Palette.activeTextColor),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
-                                );
-                              },
-                            );
-                          }),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.calendar_month),
+                  label: 'Kalendarz',
+                ),
+              ],
+              selectedItemColor: _selectedHomeIndex > 1
+                  ? Palette.focusColor
+                  : Palette.domjanColor,
+              unselectedItemColor: Palette.focusColor,
+              currentIndex: _selectedHomeIndex > 1 ? 0 : _selectedHomeIndex,
+              onTap: _onHomeItemTapped,
+            ),
+          ),
+          body: () {
+            switch (_selectedHomeIndex) {
+              case 0:
+                {
+                  return timeline();
+                }
+              case 1:
+                {
+                  return Calendar();
+                }
+              case 2:
+                {
+                  return const Drivers();
+                }
+              case 3:
+                {
+                  return const Buses();
+                }
+              case 4:
+                {
+                  return timeline();
+                }
+            }
+          }(),
+          endDrawer: StatefulBuilder(
+            builder: (context, setState) {
+              return Drawer(
+                backgroundColor: Palette.backgroundColor,
+                child: FutureBuilder(
+                  future: getDrawerFields(selectedDrawerIndex),
+                  builder: (context, snapshot) {
+                    return ListView(
+                      children: snapshot.data ??
+                          [
+                            const Text(
+                              "Coś poszło nie tak, \nnie udało się pokazać kierowców.",
+                              style: TextStyle(color: Palette.activeTextColor),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                     );
                   },
                 ),
               );
             },
-          );
-        } else {
-          return const Center(
-            child: SizedBox(
-              width: 150,
-              height: 150,
-              child: CircularProgressIndicator(
-                color: Palette.domjanColor,
-                strokeWidth: 10,
-              ),
-            ),
-          );
-        }
+          ),
+        );
       },
     );
   }

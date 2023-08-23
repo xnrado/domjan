@@ -1,37 +1,18 @@
 import 'package:domjan/views/classes.dart';
 import 'package:domjan/views/home/assignment.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../palette.dart';
 
 import '../../globals.dart' as globals;
 
-class Calendar extends StatefulWidget {
-  const Calendar({super.key});
-
-  @override
-  // ignore: library_private_types_in_public_api
-  _CalendarState createState() => _CalendarState();
-}
-
-class _CalendarState extends State<Calendar> {
-  late ValueNotifier<List<Event>> _selectedEvents;
+class Calendar extends ConsumerWidget {
+  final ValueNotifier<List<Event>> _selectedEvents = ValueNotifier([]);
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   Map<DateTime, List<Event>> yEvents = {};
-
-  @override
-  void initState() {
-    super.initState();
-    print('State Initialized');
-    _selectedEvents = ValueNotifier(_getEventsForDay(_focusedDay));
-  }
-
-  @override
-  void dispose() {
-    _selectedEvents.dispose();
-    super.dispose();
-  }
 
   List<Event> _getEventsForDay(DateTime day) {
     // Implementation example
@@ -40,13 +21,14 @@ class _CalendarState extends State<Calendar> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return StatefulBuilder(
       builder: (context, setState) {
         return FutureBuilder(
           future: getEvents(globals.prefs?.getInt('currentDrawerSelectionID'),
               globals.prefs?.getString('currentDrawerSelectionType')),
           builder: (context, snapshot) {
+            print('alyo');
             if (snapshot.hasError) {
               return const Center(
                 child: Text(
@@ -174,6 +156,10 @@ class _CalendarState extends State<Calendar> {
                                 },
                                 title: Text('${value[index].assignmentName}'),
                                 leading: Icon(Icons.sunny),
+                                trailing: Text(
+                                  '${NumberFormat('00').format(value[index].assignmentDatetime.hour)}:${NumberFormat('00').format(value[index].assignmentDatetime.minute)}',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
                               ),
                             );
                           },

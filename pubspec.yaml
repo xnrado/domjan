@@ -46,6 +46,7 @@ dependencies:
   table_calendar: ^3.0.9
   intl: ^0.18.1
   pin_code_fields: ^8.0.1
+  flutter_riverpod: ^2.3.7
 
 dev_dependencies:
   flutter_test:

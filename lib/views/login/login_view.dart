@@ -1,3 +1,4 @@
+import 'package:domjan/views/login/code_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../palette.dart';
@@ -466,25 +467,57 @@ class _LoginViewState extends State<LoginView> {
               const SnackBar(content: Text('Zostałeś pomyślnie zalogowany!')),
             );
 
-            // Route to HomeView
-            Navigator.of(context).pushAndRemoveUntil(
-              PageRouteBuilder(
-                transitionDuration: const Duration(milliseconds: 200),
-                reverseTransitionDuration: const Duration(milliseconds: 200),
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    const HomeView(),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) =>
-                        SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(1, 0),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
+            var data = await globals.conn?.execute(
+                'SELECT * FROM drivers WHERE driver_mail = "${FirebaseAuth.instance.currentUser?.email}"');
+            if (data?.numOfRows == 0) {
+              // Route to CodeView if e-mail doesn't have a code assigned.
+              Navigator.of(context).pushAndRemoveUntil(
+                PageRouteBuilder(
+                  transitionDuration: const Duration(milliseconds: 200),
+                  reverseTransitionDuration: const Duration(milliseconds: 200),
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      const CodeView(),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) =>
+                          SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(1, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
                 ),
-              ),
-              (Route<dynamic> route) => false,
-            );
+                (Route<dynamic> route) => false,
+              );
+            } else {
+              bool isAdmin = false;
+              for (final driver in data!.rows) {
+                isAdmin = driver.typedColByName<bool>('admin')!;
+              }
+
+              globals.prefs!.setBool('adminConst', isAdmin);
+              globals.prefs!.setBool('admin', isAdmin);
+
+              // Route to HomeView.
+              Navigator.of(context).pushAndRemoveUntil(
+                PageRouteBuilder(
+                  transitionDuration: const Duration(milliseconds: 200),
+                  reverseTransitionDuration: const Duration(milliseconds: 200),
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      const HomeView(),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) =>
+                          SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(1, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                ),
+                (Route<dynamic> route) => false,
+              );
+            }
           }
           // Wrong login credentials
         } on FirebaseAuthException {

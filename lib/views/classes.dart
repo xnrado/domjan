@@ -31,7 +31,7 @@ class Event {
       this.busPlate});
 }
 
-Future<Map<DateTime, List<Event>>> getEvents(ID, type) async {
+Future<Map<DateTime, List<Event>>> getEvents(id, type) async {
   var query = await globals.conn!.execute("""
   SELECT 
     assignment_id,
@@ -51,7 +51,7 @@ Future<Map<DateTime, List<Event>>> getEvents(ID, type) async {
     LEFT JOIN drivers d ON a.driver_id = d.driver_id 
     LEFT JOIN buses b ON a.bus_id = b.bus_id 
   WHERE 
-    a.${type}_id = $ID
+    a.${type}_id = $id
   ORDER BY 
     assignment_datetime;""");
 
